@@ -1,0 +1,258 @@
+<!DOCTYPE html><html lang="id"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Clearance - INDONUSA</title><link rel="stylesheet" href="style.css">
+<style>
+/* ⭐ CARD ATAS DIKUNCI BEB - GAK IKUT SCROLL BEB! ⭐ */
+.card-top{position:sticky;top:60px;z-index:100;background:#fff}
+.card-top-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+.card-top-head h3{margin:0}
+.btn-save-atas{background:#F5B301;color:#000;border:0;padding:12px 18px;border-radius:10px;font-weight:900;font-size:14px;cursor:pointer;white-space:nowrap;flex-shrink:0;box-shadow:0 2px 8px rgba(0,0,0,.15)}
+.btn-save-atas:active{transform:scale(.97)}
+/* ⭐ CARD BAWAH BISA DI SCROLL BEB! ⭐ */
+.card-bawah{max-height:65vh;overflow-y:auto;padding-right:4px}
+.card-bawah::-webkit-scrollbar{width:8px}
+.card-bawah::-webkit-scrollbar-thumb{background:#0A2F52;border-radius:10px}
+.badge-proses{background:#FFF3CD;color:#8A6D00;border:1px solid #FFE08A}
+.btn-save-dalam{width:100%;padding:13px;border:0;border-radius:10px;font-weight:900;font-size:14px;cursor:pointer;margin-top:12px;background:#F5B301;color:#000}
+.btn-tutup{width:100%;padding:11px;border:0;border-radius:10px;font-weight:700;font-size:13px;cursor:pointer;margin-top:8px;background:#eee;color:#333}
+.doc-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.doc-head b{color:#0A2F52;font-size:13px}
+.btn-x{background:#FFE0E0;color:#B00000;border:0;width:32px;height:32px;border-radius:50%;font-weight:900;font-size:16px;cursor:pointer;flex-shrink:0;line-height:1}
+.doc-detail{display:none}
+.doc-split{display:flex;gap:12px;align-items:flex-start}
+.doc-form{flex:0 0 42%;min-width:0}
+.doc-preview{flex:1;min-width:0;background:#F6F8FB;border:1px solid #ddd;border-radius:10px;padding:10px;min-height:340px;display:flex;flex-direction:column}
+.doc-preview h4{margin:0 0 8px;font-size:12px;color:#0A2F52}
+.doc-preview-box{flex:1;background:#fff;border:1px solid #ddd;border-radius:8px;overflow:hidden;display:flex;align-items:center;justify-content:center;min-height:300px}
+.doc-preview-box iframe{width:100%;height:320px;border:0}
+.doc-preview-box img{max-width:100%;max-height:320px;object-fit:contain}
+.doc-preview-empty{color:#999;font-size:13px;text-align:center;padding:20px}
+@media(max-width:700px){ .card-top{top:52px} .card-bawah{max-height:none} .doc-split{flex-direction:column} .doc-form{flex:1;width:100%} .doc-preview{width:100%} }
+</style>
+</head>
+<body><div class="top"><div><b>⚓ INDONUSA MARINE</b></div></div>
+<div class="wrap"><div class="menu" id="menu"></div><div class="main">
+
+<!-- ⭐ CARD 1 - DIKUNCI DI ATAS BEB! ⭐ -->
+<div class="card card-top">
+  <div class="card-top-head">
+    <div><h3>📋 Clearance + Dokumen</h3><p style="margin:6px 0 0;color:#666;font-size:13px"></p></div>
+    <button class="btn-save-atas" onclick="simpanSemua()">💾 SAVE DATA</button>
+  </div>
+  <label>Nama Kapal (Ketik Manual Beb)</label><input id="clearKapalNama" placeholder="MY SEAHORSE">
+  <label>Pilih Kapal</label><select id="pilihClear"></select>
+  <div id="infoDokumen" style="display:none;background:#E8F5E9;padding:10px;border-radius:8px;margin:10px 0 0;font-size:13px;border:1px solid #8ED68E"></div>
+</div>
+
+<!-- ⭐ CARD 2 - DI BAWAH, BISA DI SCROLL BEB! ⭐ -->
+<div class="card card-bawah">
+  <div id="checkList"></div>
+  <label>Status Kapal</label><select id="statusClear"><option value="ARRIVAL">ARRIVAL</option><option value="CLEARANCE">CLEARANCE</option><option value="BERLAYAR">BERLAYAR</option><option value="SELESAI">SELESAI</option></select>
+  <button class="btn" onclick="printPDF()">📄 SAVE JADI PDF</button>
+  <div id="listClear"></div>
+</div>
+
+</div></div>
+<script src="db.js"></script><script>menu('clear.html'); kapalOptions('pilihClear');
+let docs=['Ship Particulars','Crew List + Passport','Cruising Permit (CAIT)','SPB - Surat Persetujuan Berlayar','Clearance Imigrasi','Clearance Bea Cukai','Clearance Karantina','Bunker Delivery Note','Final D/A'];
+let previewURL={};
+let fileDataTemp={};
+document.getElementById('checkList').innerHTML = docs.map((d,i)=>`
+<div class="doc-row">
+  <label class="doc-top">
+    <div class="doc-left">
+      <input type="checkbox" class="chk" data-i="${i}" onchange="toggleDoc(${i},this.checked)">
+      <div><b>${d}</b><br><span>Centang beb untuk input dokumen</span></div>
+    </div>
+    <span id="badge-${i}" class="badge badge-belum">❌ BELUM MASUK</span>
+  </label>
+  <div id="doc-${i}" class="doc-detail">
+    <div class="doc-head"><b>📄 Input Dokumen - ${d}</b><button class="btn-x" onclick="tutupKotak(${i})" title="Tutup / Exit beb">✕</button></div>
+    <div class="doc-split">
+      <div class="doc-form">
+        <label>No. Dokumen *</label><input id="docNo-${i}" placeholder="Contoh: CAIT-123/2026" oninput="updateBadgeLive(${i})">
+        <label>Tanggal *</label><input type="date" id="docTgl-${i}" onchange="updateBadgeLive(${i})">
+        <label>Upload File (PDF / Foto)</label><input type="file" id="docFile-${i}" accept=".pdf,.jpg,.jpeg,.png" onchange="previewFile(${i},this)">
+        <div id="fileNama-${i}" style="font-size:12px;color:#0A6B0A;font-weight:700;margin-top:4px"></div>
+        <div id="fileInfo-${i}" style="font-size:11px;color:#888;margin-top:2px"></div>
+        <label>Catatan / Nama Petugas</label><input id="docCatat-${i}" placeholder="Contoh: Diurus Andi, sudah cap basah">
+        <button class="btn-save-dalam" onclick="simpanSatu(${i})">💾 SAVE DOKUMEN INI BEB</button>
+        <button class="btn-tutup" onclick="tutupKotak(${i})">❌ TUTUP / EXIT KOTAK INI BEB</button>
+      </div>
+      <div class="doc-preview">
+        <h4>📄 PREVIEW FILE PDF BEB - <span id="prevNama-${i}">Belum ada file beb</span></h4>
+        <div class="doc-preview-box" id="prevBox-${i}"><div class="doc-preview-empty">Belum ada file beb<br><br>Upload file PDF / Foto di kiri beb,<br>langsung muncul di sini beb! 👈</div></div>
+        <div style="display:flex;gap:8px;margin-top:8px">
+          <button onclick="bukaPreview(${i})" style="flex:1;padding:9px;border:0;border-radius:8px;background:#0A2F52;color:#fff;font-weight:800;cursor:pointer">🔍 BUKA GEDE BEB</button>
+          <button onclick="hapusPreview(${i})" style="flex:1;padding:9px;border:0;border-radius:8px;background:#FFE0E0;color:#B00000;font-weight:800;cursor:pointer">🗑️ HAPUS FILE</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>`).join('');
+
+function toggleDoc(i,c){
+  let el=document.getElementById('doc-'+i); if(el) el.style.display=c?'block':'none';
+  if(c) tampilkanPreviewTersimpan(i);
+  updateBadgeLive(i);
+}
+function tutupKotak(i){
+  let el=document.getElementById('doc-'+i);
+  if(el) el.style.display='none';
+  let nama=getNamaKapal('clearKapalNama','pilihClear');
+  let data=nama?DB.clear[nama]:null;
+  let doc=data?data.checks.find(c=>c.nama===docs[i]):null;
+  if(!doc || !doc.status.includes('ADA')){
+    let chk=document.querySelector('.chk[data-i="'+i+'"]'); if(chk) chk.checked=false;
+    updateBadgeLive(i);
+  }
+}
+function previewFile(i,input){
+  let box=document.getElementById('prevBox-'+i);
+  let namaEl=document.getElementById('prevNama-'+i);
+  let file=input.files[0];
+  if(!file){ return; }
+  if(file.size > 4*1024*1024){ alert('File kebesaran beb! Max 4MB beb biar bisa kesimpen beb! File beb: '+(file.size/1024/1024).toFixed(1)+'MB beb. Coba compress dulu beb di ilovepdf.com beb!'); input.value=''; return; }
+  let reader=new FileReader();
+  reader.onload=function(e){
+    let dataUrl=e.target.result;
+    fileDataTemp[i]=dataUrl;
+    document.getElementById('fileNama-'+i).innerText='✅ File dipilih beb: '+file.name;
+    document.getElementById('fileInfo-'+i).innerText='Ukuran: '+(file.size/1024).toFixed(0)+' KB - Siap di SAVE beb, klik SAVE di bawah beb!';
+    namaEl.innerText=file.name+' - (Belum di SAVE beb, klik SAVE!)';
+    if(file.type.includes('pdf') || file.name.toLowerCase().endsWith('.pdf')){
+      box.innerHTML='<iframe src="'+dataUrl+'"></iframe>';
+    } else {
+      box.innerHTML='<img src="'+dataUrl+'">';
+    }
+    previewURL[i]=dataUrl;
+  };
+  reader.readAsDataURL(file);
+  updateBadgeLive(i);
+}
+function tampilkanPreviewTersimpan(i){
+  let nama=getNamaKapal('clearKapalNama','pilihClear');
+  let data=nama?DB.clear[nama]:null;
+  let doc=data?data.checks.find(c=>c.nama===docs[i]):null;
+  if(doc && doc.fileData){
+    let box=document.getElementById('prevBox-'+i);
+    previewURL[i]=doc.fileData;
+    fileDataTemp[i]=doc.fileData;
+    document.getElementById('prevNama-'+i).innerText=doc.file+' - ✅ UDAH KESIMPEN BEB!';
+    document.getElementById('fileNama-'+i).innerText='File tersimpan beb: '+doc.file;
+    document.getElementById('fileInfo-'+i).innerText='✅ File ini udah kesimpen permanen beb, gak ilang kalo keluar beb!';
+    if(doc.file.toLowerCase().endsWith('.pdf') || doc.fileData.includes('application/pdf')){
+      box.innerHTML='<iframe src="'+doc.fileData+'"></iframe>';
+    } else {
+      box.innerHTML='<img src="'+doc.fileData+'">';
+    }
+  }
+}
+function bukaPreview(i){
+  if(previewURL[i]){ window.open(previewURL[i],'_blank'); }
+  else {
+    let nama=getNamaKapal('clearKapalNama','pilihClear');
+    let data=nama?DB.clear[nama]:null;
+    let doc=data?data.checks.find(c=>c.nama===docs[i]):null;
+    if(doc && doc.fileData) window.open(doc.fileData,'_blank');
+    else alert('Belum ada file beb! Upload dulu beb di kiri beb!');
+  }
+}
+function hapusPreview(i){
+  let inp=document.getElementById('docFile-'+i); if(inp) inp.value='';
+  previewURL[i]=null; fileDataTemp[i]=null;
+  let nama=getNamaKapal('clearKapalNama','pilihClear');
+  if(nama && DB.clear[nama] && DB.clear[nama].checks[i]){ DB.clear[nama].checks[i].fileData=''; DB.clear[nama].checks[i].file='-'; save(); }
+  document.getElementById('prevBox-'+i).innerHTML='<div class="doc-preview-empty">Belum ada file beb<br><br>Upload file PDF / Foto di kiri beb,<br>langsung muncul di sini beb! 👈</div>';
+  document.getElementById('prevNama-'+i).innerText='Belum ada file beb';
+  document.getElementById('fileNama-'+i).innerText='';
+  document.getElementById('fileInfo-'+i).innerText='';
+  updateBadge(); renderClear();
+  alert('File dihapus beb! Klik SAVE lagi kalo mau simpen perubahannya beb!');
+}
+function updateBadgeLive(i){
+  let badge=document.getElementById('badge-'+i); if(!badge) return;
+  let nama=getNamaKapal('clearKapalNama','pilihClear');
+  let data=nama?DB.clear[nama]:null;
+  let doc=data?data.checks.find(c=>c.nama===docs[i]):null;
+  if(doc && doc.status.includes('ADA')){
+    badge.className='badge badge-sudah';
+    badge.innerText='✅ SUDAH MASUK - No. '+(doc.no||'-');
+    return;
+  }
+  let chk=document.querySelector('.chk[data-i="'+i+'"]');
+  let no=document.getElementById('docNo-'+i).value.trim();
+  if(chk && chk.checked){
+    if(no){ badge.className='badge badge-proses'; badge.innerText='🟡 SEDANG DIISI - Klik SAVE di bawah beb!'; }
+    else { badge.className='badge badge-proses'; badge.innerText='🟡 DICENTANG - Isi No. Dokumen beb!'; }
+  } else { badge.className='badge badge-belum'; badge.innerText='❌ BELUM MASUK'; }
+}
+function updateBadge(){
+  let nama=getNamaKapal('clearKapalNama','pilihClear');
+  let data=nama?DB.clear[nama]:null;
+  docs.forEach((d,i)=>{
+    let badge=document.getElementById('badge-'+i); if(!badge) return;
+    if(data){
+      let doc=data.checks.find(c=>c.nama===d);
+      if(doc && doc.status.includes('ADA')){
+        badge.className='badge badge-sudah';
+        badge.innerText='✅ SUDAH MASUK - No. '+(doc.no||'-');
+        let chk=document.querySelector('.chk[data-i="'+i+'"]'); if(chk) chk.checked=true;
+        document.getElementById('docNo-'+i).value=doc.no==='-'?'':doc.no;
+        document.getElementById('docTgl-'+i).value=doc.tgl==='-'?'':doc.tgl;
+        document.getElementById('docCatat-'+i).value=doc.catat||'';
+        document.getElementById('fileNama-'+i).innerText=(doc.file && doc.file!=='-')?'File tersimpan beb: '+doc.file:'';
+        document.getElementById('prevNama-'+i).innerText=(doc.file && doc.file!=='-')?doc.file+' - ✅ UDAH KESIMPEN BEB!':'Belum ada file beb';
+        if(doc.fileData){ previewURL[i]=doc.fileData; fileDataTemp[i]=doc.fileData; let box=document.getElementById('prevBox-'+i); if(doc.file.toLowerCase().endsWith('.pdf') || doc.fileData.includes('application/pdf')) box.innerHTML='<iframe src="'+doc.fileData+'"></iframe>'; else box.innerHTML='<img src="'+doc.fileData+'">'; }
+        document.getElementById('doc-'+i).style.display='block';
+      } else { updateBadgeLive(i); }
+    } else { updateBadgeLive(i); }
+  });
+  let info=document.getElementById('infoDokumen');
+  if(info && data){
+    let ada=data.checks.filter(c=>c.status.includes('ADA')).length;
+    info.innerHTML=`Kapal <b>${nama}</b> - Dokumen Masuk: <b>${ada}/${docs.length}</b> - ${ada===docs.length?'🎉 LENGKAP SEMUA BEB!':'⚠️ Masih kurang '+(docs.length-ada)+' beb!'}`;
+    info.style.display='block';
+  } else if(info){ info.style.display='none'; }
+}
+document.getElementById('clearKapalNama').addEventListener('input', updateBadge);
+document.getElementById('pilihClear').addEventListener('change', function(){let k=DB.kapal.find(x=>x.id==this.value); if(k) document.getElementById('clearKapalNama').value=k.nama; updateBadge();});
+function simpanSatu(i){
+  let nama=getNamaKapal('clearKapalNama','pilihClear');
+  if(!nama){ alert('Isi Nama Kapal dulu beb!'); return; }
+  let no=document.getElementById('docNo-'+i).value.trim();
+  if(!no){ alert('Isi No. Dokumen dulu beb!'); document.getElementById('docNo-'+i).focus(); return; }
+  let tgl=document.getElementById('docTgl-'+i).value;
+  if(!tgl){ alert('Isi Tanggal dulu beb!'); return; }
+  let f=document.getElementById('docFile-'+i);
+  let fileNama=f && f.files[0]?f.files[0].name:'';
+  let lama=DB.clear[nama]?DB.clear[nama].checks.find(c=>c.nama===docs[i]):null;
+  if(!fileNama && lama && lama.file && lama.file!=='-') fileNama=lama.file;
+  let fileData=fileDataTemp[i] || (lama?lama.fileData||'':'');
+  if(!DB.clear[nama]) DB.clear[nama]={checks:docs.map(n=>({nama:n,no:'-',tgl:'-',file:'-',fileData:'',catat:'',status:'BELUM ❌'})),status:document.getElementById('statusClear').value,tglSimpan:new Date().toLocaleString('id-ID')};
+  DB.clear[nama].checks[i]={nama:docs[i],no:no,tgl:tgl,file:fileNama||'-',fileData:fileData,catat:document.getElementById('docCatat-'+i).value,status:'ADA ✅'};
+  DB.clear[nama].status=document.getElementById('statusClear').value;
+  DB.clear[nama].tglSimpan=new Date().toLocaleString('id-ID');
+  let k=DB.kapal.find(x=>x.nama.toLowerCase()===nama.toLowerCase()); if(k) k.status=document.getElementById('statusClear').value;
+  try{ save(); }catch(e){ alert('GAGAL SAVE BEB! File kebesaran beb! Coba file di bawah 4MB beb!'); return; }
+  updateBadge(); renderClear();
+  alert('BERHASIL BEB! ✅\n'+docs[i]+' tersimpan beb!\nNo: '+no+'\nFile: '+fileNama);
+  let el=document.getElementById('doc-'+i); if(el) el.style.display='none';
+}
+function simpanSemua(){
+  let nama=getNamaKapal('clearKapalNama','pilihClear'); if(!nama){alert('Isi Nama Kapal dulu beb!');return;}
+  if(!DB.clear[nama]){alert('Belum ada dokumen yang di-save beb! Isi dulu beb, terus klik SAVE di dalam kotak dokumennya beb!');return;}
+  DB.clear[nama].status=document.getElementById('statusClear').value;
+  save(); updateBadge(); renderClear(); alert('BERHASIL BEB! Semua clearance '+nama+' tersimpan beb!');
+}
+function renderClear(){
+  document.getElementById('listClear').innerHTML=Object.keys(DB.clear||{}).map(n=>{let d=DB.clear[n]; let ada=d.checks.filter(c=>c.status.includes('ADA')).length; return `<div style="padding:10px;border-bottom:1px solid #eee"><b>${n}</b> - ${d.status} - ${ada}/${d.checks.length} dokumen beb<br><small>${d.checks.map(c=>c.nama+': '+c.status+' No.'+c.no+' File:'+c.file).join('<br>')}</small></div>`}).join('');
+}
+function printPDF(){
+  let nama=getNamaKapal('clearKapalNama','pilihClear'); if(!nama){alert('Isi Nama Kapal dulu beb!');return;}
+  let data=DB.clear[nama]; if(!data){alert('Belum ada clearance '+nama+' beb! Save dulu beb!');return;}
+  let k=DB.kapal.find(x=>x.nama.toLowerCase()===nama.toLowerCase())||{};
+  let rows=data.checks.map(c=>`<tr><td><b>${c.nama}</b></td><td>${c.status}</td><td>${c.no}</td><td>${c.tgl||'-'}</td><td>${c.file||'-'}</td><td>${c.catat||'-'}</td></tr>`).join('');
+  let html=`<html><head><title>Clearance - ${nama}</title><style>body{font-family:Arial;padding:20px;color:#000}table{width:100%;border-collapse:collapse;font-size:12px}th,td{border:1px solid #000;padding:8px}th{background:#0A2F52;color:#fff}</style></head><body><h2>⚓ PT. INDONUSA TENGGARA MARINE</h2><p><b>Kapal:</b> ${nama} | <b>Bendera:</b> ${k.bendera||'-'} | <b>Pelabuhan:</b> ${k.pelabuhan||'-'} | <b>Status:</b> ${data.status}<br><b>Tanggal Simpan:</b> ${data.tglSimpan}</p><table><tr><th>Dokumen</th><th>Status</th><th>No. Dokumen</th><th>Tanggal</th><th>File</th><th>Catatan</th></tr>${rows}</table><br><br><p>Dibuat Oleh, ________________ | Disetujui Kapten, ________________</p><script>window.print()<\/script></body></html>`;
+  let w=window.open('','_blank'); w.document.write(html); w.document.close();
+}
+updateBadge(); renderClear();
+</script></body></html>

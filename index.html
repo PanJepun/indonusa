@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>DASHBOARD - INDONUSA - MARINE</title>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<style>
+body{font-family:'Segoe UI',Arial;background:linear-gradient(135deg,#0a1629 0%,#12233a 100%);margin:0;padding:0;color:#333}
+.header{background:linear-gradient(90deg,#d4af37 0%,#f7eb81 100%);padding:12px 20px;color:#000;display:flex;justify-content:space-between;align-items:center;gap:15px}
+.header-kiri{display:flex;align-items:center;gap:15px;flex:1;min-width:0}
+.header h1{margin:0;font-size:18px;white-space:nowrap}
+.marquee{flex:1;overflow:hidden;background:rgba(0,0,0,0.12);border-radius:50px;padding:6px 15px}
+.marquee span{display:inline-block;white-space:nowrap;font-size:13px;font-weight:700;animation:jalan 18s linear infinite}
+@keyframes jalan{0%{transform:translateX(100%)}100%{transform:translateX(-100%)}}
+.header-kanan{font-size:12px;font-weight:600;white-space:nowrap}
+.navbar{background:#1a2a4a;padding:12px 20px;display:flex;gap:10px;flex-wrap:wrap;border-bottom:3px solid #d4af37}
+.navbar a{color:white;text-decoration:none;background:#2c3e50;padding:8px 18px;border-radius:50px;font-size:13px;font-weight:600}
+.navbar a:hover,.navbar a.active{background:#d4af37;color:#000}
+.container{padding:20px}
+.box{background:white;border:2px solid #d4af37;border-radius:8px;padding:20px;max-width:1200px;margin:auto}
+.slider{position:relative;max-width:1200px;margin:0 auto 20px auto;overflow:hidden;border-radius:12px;border:2px solid #d4af37;background:#000;box-shadow:0 5px 20px rgba(0,0,0,0.4)}
+.slides{display:flex;transition:transform 0.6s ease-in-out}
+.slide{min-width:100%;position:relative;height:440px;background:#000;overflow:hidden}
+.slide video{width:100%;height:100%;object-fit:cover;display:block;border:0}
+.slide::after{content:"";position:absolute;inset:0;background:linear-gradient(to top, rgba(0,0,0,0.65) 0%, transparent 35%, rgba(0,0,0,0.25) 100%);pointer-events:none}
+.badge-video{position:absolute;top:14px;left:14px;z-index:5;background:rgba(0,0,0,0.65);color:#fff;padding:6px 12px;border-radius:20px;font-size:12px;font-weight:700}
+.badge-hari{position:absolute;bottom:14px;left:14px;z-index:5;background:#d4af37;color:#000;padding:6px 12px;border-radius:20px;font-size:11px;font-weight:800}
+.btn-mute{position:absolute;top:12px;right:14px;z-index:5;background:rgba(212,175,55,0.95);border:none;width:40px;height:40px;border-radius:50%;cursor:pointer;font-size:18px}
+.nama-kapal-video{position:absolute;bottom:52px;left:14px;z-index:5;color:#fff;font-size:26px;font-weight:900;text-shadow:0 2px 10px rgba(0,0,0,0.8);margin:0}
+.btn-view-detail{position:absolute;bottom:14px;right:14px;z-index:6;background:#25D366;color:#fff;border:none;padding:12px 20px;border-radius:50px;font-weight:900;cursor:pointer;font-size:13px;box-shadow:0 4px 15px rgba(0,0,0,0.4)}
+.prev,.next{position:absolute;top:50%;transform:translateY(-50%);background:rgba(212,175,55,0.95);color:#000;border:none;width:44px;height:44px;border-radius:50%;z-index:10;cursor:pointer;font-size:18px;font-weight:bold}
+.prev{left:12px}.next{right:12px}
+.dots{text-align:center;padding:12px;background:#1a2a4a}
+.dot{display:inline-block;width:12px;height:12px;margin:0 5px;background:#555;border-radius:50%;cursor:pointer}
+.dot.active{background:#d4af37}
+.card-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:18px}
+.card{background:white;border-left:5px solid #00c853;padding:14px 18px;border-radius:6px}
+.card h4{margin:0 0 6px 0;font-size:11px;color:#e53935;text-transform:uppercase}
+.card h2{margin:0;font-size:26px}
+.info-armada{display:grid;grid-template-columns:repeat(2,1fr);gap:16px;margin-bottom:20px}
+.info-card{background:#f8f9fa;border:1px solid #ddd;border-radius:8px;padding:12px 18px;display:flex;justify-content:space-between;align-items:center}
+.menu-title{color:#d4af37;margin-bottom:12px;font-size:15px;font-weight:700}
+.menu-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:16px;margin-bottom:10px}
+.menu-item{background:#f8f9fa;border:2px solid #ddd;border-radius:8px;padding:18px 10px;text-align:center;cursor:pointer}
+.menu-item:hover{border-color:#d4af37;background:#fff8e1}
+.menu-item img{width:40px;height:40px;margin-bottom:6px}
+.menu-item h3{margin:0;color:#1a2a4a;font-size:13px}
+.katalog-title{color:#d4af37;margin:25px 0 12px 0;font-size:17px;font-weight:700;border-left:4px solid #d4af37;padding-left:10px}
+.katalog-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+.katalog-card{background:white;border:1px solid #ddd;border-radius:8px;overflow:hidden;display:flex;flex-direction:column}
+.katalog-card video{width:100%;height:150px;object-fit:cover;background:#000;border:0}
+.katalog-info{padding:10px;flex:1}
+.katalog-info h4{margin:0 0 4px 0;font-size:14px}
+.katalog-info .harga{font-size:15px;color:#e53935;font-weight:700}
+.status-ada{background:#e8f5e9;color:#2e7d32;padding:2px 7px;border-radius:4px;font-size:10px;font-weight:bold}
+.status-keluar{background:#f8d7da;color:#721c24;padding:2px 7px;border-radius:4px;font-size:10px;font-weight:bold}
+.backup-box{background:#f0fdf4;border:2px solid #22c55e;border-radius:8px;padding:15px;margin-top:18px}
+.video-box{background:#fff8e1;border:2px solid #d4af37;border-radius:8px;padding:15px;margin-top:18px}
+.video-box input{width:100%;padding:10px;border-radius:8px;border:1px solid #ddd;box-sizing:border-box;margin:6px 0}
+.hari-grid{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0}
+.hari-grid label{background:#fff;border:2px solid #ddd;padding:8px 12px;border-radius:50px;cursor:pointer;font-size:12px;font-weight:700}
+.hari-grid label:has(input:checked){background:#d4af37;border-color:#d4af37}
+.hari-grid input{display:none}
+.btn-backup{padding:10px 16px;border:none;border-radius:8px;font-weight:700;cursor:pointer;font-size:13px}
+.btn-hijau{background:#22c55e;color:white}.btn-biru{background:#3b82f6;color:white}.btn-ungu{background:#8b5cf6;color:white}
+.backup-table{width:100%;border-collapse:collapse;margin-top:10px;background:white}
+.backup-table th{background:#1a2a4a;color:white;padding:8px;text-align:left;font-size:12px}
+.backup-table td{border-bottom:1px solid #ddd;padding:8px;font-size:12px}
+#backupDetail{background:#0a1629;color:#d4af37;padding:12px;border-radius:8px;font-size:11px;white-space:pre-wrap;max-height:300px;overflow:auto;display:none;margin-top:10px}
+.modal-bg{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);display:none;justify-content:center;align-items:center;z-index:999;padding:10px;box-sizing:border-box}
+.modal-box{background:white;border-radius:12px;max-width:480px;width:100%;max-height:92vh;display:flex;flex-direction:column;overflow:hidden}
+.modal-head{background:#0A2F52;color:white;padding:14px;text-align:center}
+.modal-head h2{margin:0;font-size:18px}
+.modal-body{padding:14px;font-size:13px;overflow-y:auto;flex:1;line-height:1.6}
+.modal-foot{display:flex;gap:8px;padding:12px;background:#fff;border-top:1px solid #eee}
+.btn-batal{flex:1;padding:12px;border:1px solid #ddd;background:#e5e7eb;border-radius:8px;font-weight:800;cursor:pointer}
+.btn-restore-warn{flex:1.2;padding:12px;border:none;background:#dc2626;color:white;border-radius:8px;font-weight:800;cursor:pointer}
+.btn-restore-warn:disabled{background:#9ca3af}
+.detail-row{display:grid;grid-template-columns:120px 1fr;gap:8px;padding:7px 0;border-bottom:1px solid #eee}
+.detail-row b{color:#0A2F52}
+@media(max-width:1000px){.card-grid,.menu-grid,.info-armada,.katalog-grid{grid-template-columns:repeat(2,1fr)}.slide{height:340px}.nama-kapal-video{font-size:20px}}
+</style>
+</head>
+<body>
+<div class="header"><div class="header-kiri"><h1>⚓ DASHBOARD - INDONUSA - MARINE</h1><div class="marquee"><span>PT. INDONUSA TENGGARA MARINE - SHIPPING AGENCY BALI - FIREBASE ACTIVE - KAPAL MASUK - CLEARANCE - CREW CHANGE - PROVISION - FINANCE - INSIDEN</span></div></div><span class="header-kanan" id="tgl_sekarang"></span></div>
+<div class="navbar"><a href="index.html" class="active">Dashboard</a><a href="kapal.html">Kapal Masuk</a><a href="clearance.html">Clearance</a><a href="crew.html">Crew Change</a><a href="provision.html">Provision</a><a href="finance.html">Finance</a><a href="insiden.html">Insiden</a><a href="semua.html">Semua Data</a><a href="#backupSection" style="background:#22c55e;color:#fff;">💾 Backup</a></div>
+<div class="container">
+<div class="slider" id="sliderKapal"><div class="slides" id="slidesContainer"></div><button class="prev" onclick="geserSlide(-1)">❮</button><button class="next" onclick="geserSlide(1)">❯</button><div class="dots" id="dotsContainer"></div></div>
+<div class="box">
+<div class="card-grid"><div class="card"><h4>TOTAL KAPAL</h4><h2 id="total_kapal">0</h2></div><div class="card"><h4>CLEARANCE</h4><h2 id="total_clearance">0</h2></div><div class="card"><h4>CREW CHANGE</h4><h2 id="total_crew">0</h2></div><div class="card"><h4>INSIDEN</h4><h2 id="total_insiden">0</h2></div></div>
+<div class="info-armada"><div class="info-card"><span>⚓ Kapal Arrival Hari Ini</span><span id="kapal_hari_ini">0 Kapal</span></div><div class="info-card"><span>👨‍✈️ Crew ON / OFF Bulan Ini</span><span id="crew_bulan_ini">0 / 0 Orang</span></div></div>
+<p id="statusFirebase" style="text-align:center;font-size:11px;font-weight:bold">⏳ Menghubungkan ke Firebase INDONUSA - MARINE...</p>
+<h3 class="menu-title">MENU UTAMA</h3>
+<div class="menu-grid">
+<div class="menu-item" onclick="window.location='kapal.html'"><img src="https://cdn-icons-png.flaticon.com/512/3079/3079148.png"><h3>Kapal Masuk</h3></div>
+<div class="menu-item" onclick="window.location='clearance.html'"><img src="https://cdn-icons-png.flaticon.com/512/2821/2821001.png"><h3>Clearance</h3></div>
+<div class="menu-item" onclick="window.location='crew.html'"><img src="https://cdn-icons-png.flaticon.com/512/219/219983.png"><h3>Crew Change</h3></div>
+<div class="menu-item" onclick="window.location='provision.html'"><img src="https://cdn-icons-png.flaticon.com/512/3135/3135715.png"><h3>Provision</h3></div>
+<div class="menu-item" onclick="window.location='finance.html'"><img src="https://cdn-icons-png.flaticon.com/512/1077/1077114.png"><h3>Finance / D/A</h3></div>
+<div class="menu-item" onclick="window.location='insiden.html'" style="border-color:#dc3545;background:#fff5f5"><img src="https://cdn-icons-png.flaticon.com/512/3524/3524636.png"><h3 style="color:#dc3545">🚨 Insiden</h3></div>
+<div class="menu-item" onclick="document.getElementById('videoSection').scrollIntoView({behavior:'smooth'})" style="border-color:#d4af37;background:#fff8e1"><img src="https://cdn-icons-png.flaticon.com/512/3524/3524636.png"><h3>🎬 Kelola Video</h3></div>
+<div class="menu-item" onclick="window.location='semua.html'" style="border-color:#d4af37;background:#fff8e1"><img src="https://cdn-icons-png.flaticon.com/512/1214/1214428.png"><h3>📁 Semua Data</h3></div>
+</div>
+
+<div class="video-box" id="videoSection">
+  <h3 style="margin:0 0 5px 0;color:#92400e;">🎬 KELOLA VIDEO SLIDER</h3>
+  <p style="font-size:12px;color:#64748b;margin:0">Hari ini: <b id="hariIniLabel"></b> - Video pakai MP4 langsung, TIDAK pakai YouTube.</p>
+  <p style="font-size:12px;font-weight:700;margin:10px 0 0">1. Judul Video:</p>
+  <input id="videoJudul" placeholder="Judul Video - Contoh: TITANIC">
+  <p style="font-size:12px;font-weight:700;margin:8px 0 0">2. Link Video MP4:</p>
+  <input id="videoUrl" placeholder="Link Video MP4">
+  <p style="font-size:12px;font-weight:700;margin:8px 0 0">ATAU pilih File MP4 dari HP / Laptop:</p>
+  <input type="file" id="fileVideo" accept="video/mp4,video/webm,video/mov" onchange="pilihFileVideo(event)" style="background:#fff">
+  <p id="namaFileVideo" style="font-size:11px;color:#15803d;font-weight:700;margin:4px 0"></p>
+  <p style="font-size:12px;font-weight:700;margin:8px 0 0">3. Hari apa saja video ini diputar?</p>
+  <div class="hari-grid"><label><input type="checkbox" class="cek-hari" value="Senin"> Senin</label><label><input type="checkbox" class="cek-hari" value="Selasa"> Selasa</label><label><input type="checkbox" class="cek-hari" value="Rabu"> Rabu</label><label><input type="checkbox" class="cek-hari" value="Kamis"> Kamis</label><label><input type="checkbox" class="cek-hari" value="Jumat"> Jumat</label><label><input type="checkbox" class="cek-hari" value="Sabtu"> Sabtu</label><label><input type="checkbox" class="cek-hari" value="Minggu"> Minggu</label></div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn-backup btn-hijau" onclick="pilihSemuaHari(true)">✅ Semua Hari</button><button class="btn-backup" style="background:#e5e7eb" onclick="pilihSemuaHari(false)">❌ Kosongkan</button><button class="btn-backup" style="background:#f59e0b;color:#fff" onclick="pilihWeekend()">🌴 Cuma Weekend</button><button class="btn-backup" style="background:#0A2F52;color:#fff" onclick="pilihWeekday()">💼 Cuma Weekday</button></div>
+  <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap"><button class="btn-backup btn-hijau" onclick="simpanVideo()">💾 SIMPAN VIDEO</button><button class="btn-backup btn-biru" onclick="pakaiVideoContoh()">🎬 TAMBAH 3 VIDEO CONTOH</button><button class="btn-backup" style="background:#000;color:#fff" onclick="tambahVideoTitanic()">🚢 TAMBAH VIDEO TITANIC</button></div>
+  <p id="statusVideo" style="font-size:12px;font-weight:700;color:#15803d;"></p><div id="listVideo"></div>
+</div>
+
+<div class="backup-box" id="backupSection"><h3 style="margin:0 0 5px 0;color:#15803d;">💾 BACKUP - ANTI DOUBLE</h3><div style="display:flex;gap:8px;flex-wrap:wrap;"><button class="btn-backup btn-hijau" onclick="buatBackup()">📥 Backup Sekarang</button><button class="btn-backup btn-biru" onclick="loadBackupList()">👀 Lihat Backup</button><button class="btn-backup btn-ungu" onclick="exportBackupJSON()">⬇️ Download JSON Terakhir</button><input type="file" id="fileRestore" accept=".json" style="display:none;" onchange="siapkanRestoreFile(event)"><button class="btn-backup" style="background:#f59e0b;color:#fff;" onclick="document.getElementById('fileRestore').click()">📂 Restore dari File JSON</button></div><p id="statusBackup" style="font-size:12px;font-weight:700;color:#15803d;margin:10px 0 0 0;"></p><table class="backup-table" id="tabelBackup" style="display:none;"><thead><tr><th>Tanggal Backup</th><th>Kapal</th><th>Crew</th><th>Insiden</th><th>Aksi</th></tr></thead><tbody></tbody></table><div id="backupDetail"></div></div>
+</div>
+<h3 class="katalog-title">KATALOG KAPAL - INDONUSA - MARINE</h3>
+<div class="katalog-grid" id="katalogContainer"></div>
+</div>
+<div class="modal-bg" id="modalDetail" onclick="if(event.target===this) tutupDetail()"><div class="modal-box"><div class="modal-head"><h2 id="detailJudul">⚓ Detail Kapal</h2><p id="detailSub" style="margin:4px 0 0;font-size:12px;opacity:0.8"></p></div><div class="modal-body" id="detailIsi"></div><div class="modal-foot"><button class="btn-batal" onclick="tutupDetail()">❌ TUTUP</button><button class="btn-backup btn-hijau" style="flex:1.2" onclick="window.location='kapal.html'">📋 BUKA HALAMAN KAPAL</button></div></div></div>
+<div class="modal-bg" id="modalRestore" onclick="if(event.target===this) tutupModalRestore()"><div class="modal-box"><div class="modal-head" style="background:#dc2626"><h2>⚠️ MAU RESTORE DATA?</h2></div><div class="modal-body"><div id="isiWarningRestore"></div><div style="background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:8px;margin:8px 0;font-size:11px"><b>✅ Yang terjadi:</b> Cuma nambah yang <b>hilang</b>. Yang udah ada <b>tidak ditimpa</b>. <b>Tidak double.</b></div><label style="display:flex;gap:8px;"><input type="checkbox" id="cekSetuju" onchange="cekTombolRestore()"><span>Saya paham, restore cuma nambah yang hilang.</span></label><p>Ketik <b>RESTORE</b> :</p><input type="text" id="ketikRestore" placeholder="KETIK RESTORE" oninput="cekTombolRestore()" style="width:100%;padding:9px;border:2px solid #e5e7eb;border-radius:8px;text-transform:uppercase"><p id="pesanKetik" style="font-size:11px;color:#dc2626;"></p></div><div class="modal-foot"><button class="btn-batal" onclick="tutupModalRestore()">❌ BATAL</button><button class="btn-restore-warn" id="btnKonfirmasiRestore" disabled onclick="jalankanRestore()">♻️ YA, RESTORE</button></div></div></div>
+<script>
+const firebaseConfig = { apiKey: "AIzaSyBI79kjr4WGpmh3OvUxKXcgRao8PMCcxIY", authDomain: "fir-panjepun.firebaseapp.com", projectId: "fir-panjepun", storageBucket: "fir-panjepun.firebasestorage.app", messagingSenderId: "399104502129", appId: "1:399104502129:web:3230853484a64d220c2ed0" };
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+let DB = { kapal:[], clearance:{}, crewChange:{}, provision:{}, finance:[], insiden:[], videos:[] };
+let slideIndex = 1;
+let backupTerakhir = null;
+let restoreYangDipilih = null;
+let fileVideoTerpilih = null;
+let urlFileVideoLocal = "";
+const NAMA_HARI = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
+const HARI_INI = NAMA_HARI[new Date().getDay()];
+const SEMUA_HARI = ['Senin','Selasa','Rabu','Kamis','Jumat','Sabtu','Minggu'];
+document.getElementById('tgl_sekarang').innerText = new Date().toLocaleDateString('id-ID',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+document.getElementById('hariIniLabel').innerText = HARI_INI;
+const VIDEO_DEFAULT = [
+  {id:'default1', judul:'Kapal Pesiar di Laut Lepas', url:'https://videos.pexels.com/video-files/1093662/1093662-hd_1920_1080_30fps.mp4', hari:['Senin','Selasa','Rabu','Kamis','Jumat','Sabtu','Minggu']},
+  {id:'default2', judul:'Kapal Pesiar Meninggalkan Pelabuhan', url:'https://cdn.pixabay.com/video/2020/05/25/40130-424930032_large.mp4', hari:['Senin','Selasa','Rabu','Kamis','Jumat','Sabtu','Minggu']},
+  {id:'default3', judul:'Laut Biru dari Kapal Pesiar', url:'https://videos.pexels.com/video-files/3015510/3015510-hd_1920_1080_24fps.mp4', hari:['Sabtu','Minggu']}
+];
+// === PEMBERSIH OTOMATIS: BUANG YOUTUBE (ERROR 153) + BUANG DUPLIKAT + PERBAIKI HARI KOSONG ===
+function bersihkanVideo(list){
+  if(!list || !list.length) return VIDEO_DEFAULT.slice();
+  let lihat = {};
+  let bersih = [];
+  list.forEach(function(v){
+    if(!v || v.youtube) return;
+    let kunci = String(v.url||'').trim();
+    if(!kunci || lihat[kunci]) return;
+    lihat[kunci] = true;
+    if(!v.hari || !v.hari.length) v.hari = SEMUA_HARI.slice();
+    if(!v.id) v.id = Date.now() + Math.random();
+    bersih.push(v);
+  });
+  return bersih.length ? bersih : VIDEO_DEFAULT.slice();
+}
+try{ let l=JSON.parse(localStorage.getItem('INDONUSA_DB')||'{}'); if(l&&typeof l==='object') DB=Object.assign(DB,l); }catch(e){}
+DB.videos = bersihkanVideo(DB.videos);
+renderAll();
+db.collection("indonusa").doc("data_utama").onSnapshot(function(doc){
+  if(doc.exists){
+    DB=Object.assign(DB, doc.data()||{});
+    DB.videos = bersihkanVideo(DB.videos);
+    localStorage.setItem('INDONUSA_DB', JSON.stringify(DB));
+  }
+  renderAll();
+});
+function simpanDB(){ localStorage.setItem('INDONUSA_DB', JSON.stringify(DB)); db.collection("indonusa").doc("data_utama").set(DB).catch(function(e){ console.log(e.message); }); }
+function hitungCrew(){ let on=0,off=0; Object.values(DB.crewChange||{}).forEach(function(c){ on+=(c.on||[]).length; off+=(c.off||[]).length; }); return {on:on, off:off, total:on+off}; }
+function getStatus(s){ s=String(s||'ARRIVAL').toUpperCase(); if(s.includes('DEPART')||s.includes('OUT')) return '<span class="status-keluar">DEPARTURE</span>'; return '<span class="status-ada">ARRIVAL</span>'; }
+function videoHariIni(){ let semua=DB.videos||[]; let cocok=semua.filter(function(v){ return (v.hari||[]).includes(HARI_INI); }); return cocok.length ? cocok : semua; }
+function mediaHtml(v){ return '<video src="'+v.url+'" autoplay muted loop playsinline preload="metadata" poster="https://images.unsplash.com/photo-1578574577315-3fbeb0cecdc2?w=800&q=80"></video>'; }
+function renderAll(){
+  let crew=hitungCrew();
+  document.getElementById('total_kapal').innerText=(DB.kapal||[]).length;
+  document.getElementById('total_clearance').innerText=Object.keys(DB.clearance||{}).length;
+  document.getElementById('total_crew').innerText=crew.total;
+  document.getElementById('total_insiden').innerText=(DB.insiden||[]).length;
+  document.getElementById('kapal_hari_ini').innerText=(DB.kapal||[]).length+' Kapal';
+  document.getElementById('crew_bulan_ini').innerText=crew.on+' / '+crew.off+' Orang';
+  document.getElementById('statusFirebase').innerText='FIREBASE: '+(DB.kapal||[]).length+' kapal | '+crew.total+' crew | '+(DB.insiden||[]).length+' insiden | Video hari '+HARI_INI+': '+videoHariIni().length+' video';
+  document.getElementById('statusFirebase').style.color='green';
+  renderSlider(); renderKatalog(); renderListVideo();
+}
+function toggleMute(btn, video){ if(!video) return; video.muted = !video.muted; btn.innerText = video.muted ? '🔇' : '🔊'; }
+function renderSlider(){
+  let slidesContainer=document.getElementById('slidesContainer');
+  let dotsContainer=document.getElementById('dotsContainer');
+  let videos = videoHariIni();
+  if(!DB.kapal.length){ document.getElementById('sliderKapal').innerHTML='<div style="text-align:center;padding:80px;color:#d4af37;">Belum ada data kapal<br><button onclick="window.location=\'kapal.html\'" style="margin-top:12px;padding:10px 18px;border:none;border-radius:50px;background:#d4af37;font-weight:700;cursor:pointer">+ Tambah Kapal</button></div>'; return; }
+  slidesContainer.innerHTML=''; dotsContainer.innerHTML='';
+  DB.kapal.forEach(function(k,i){
+    let v = videos[i % videos.length];
+    slidesContainer.innerHTML += '<div class="slide">' + mediaHtml(v) + '<span class="badge-video">🎬 '+v.judul+'</span><button class="btn-mute" onclick="toggleMute(this, this.parentElement.querySelector(\'video\'))">🔇</button><h3 class="nama-kapal-video">⚓ '+(k.nama||'-')+'</h3><span class="badge-hari">📅 '+(v.hari||[]).join(', ')+'</span><button class="btn-view-detail" onclick="bukaDetail('+i+')">👁️ VIEW DETAIL</button></div>';
+    dotsContainer.innerHTML += '<span class="dot" onclick="currentSlide('+(i+1)+')"></span>';
+  });
+  showSlides(slideIndex);
+}
+function bukaDetail(index){
+  let k = DB.kapal[index]; if(!k) return;
+  let crew = (DB.crewChange||{})[k.nama] || {on:[], off:[]};
+  let clr = (DB.clearance||{})[k.nama] || {};
+  let prov = (DB.provision||{})[k.nama];
+  let insidenKapal = (DB.insiden||[]).filter(function(x){ return x.kapal===k.nama; });
+  document.getElementById('detailJudul').innerText = '⚓ ' + (k.nama||'-');
+  document.getElementById('detailSub').innerText = (k.bendera||'') + ' | ' + (k.callSign||'');
+  let html = '';
+  html += '<div class="detail-row"><b>Status</b><span>'+getStatus(k.status)+' '+(k.status||'')+'</span></div>';
+  html += '<div class="detail-row"><b>Pelabuhan</b><span>'+(k.pelabuhan||'-')+'</span></div>';
+  html += '<div class="detail-row"><b>ETA</b><span>'+(k.eta||'-')+'</span></div>';
+  html += '<div class="detail-row"><b>ETD</b><span>'+(k.etd||'-')+'</span></div>';
+  html += '<div class="detail-row"><b>Agent</b><span>'+(k.agent||'INDONUSA')+'</span></div>';
+  html += '<div class="detail-row"><b>Call Sign</b><span>'+(k.callSign||'-')+'</span></div>';
+  html += '<div class="detail-row"><b>Bendera</b><span>'+(k.bendera||'-')+'</span></div>';
+  html += '<div class="detail-row"><b>Clearance In</b><span>'+(clr.in||clr.clearanceIn||'-')+'</span></div>';
+  html += '<div class="detail-row"><b>Clearance Out</b><span>'+(clr.out||clr.clearanceOut||'-')+'</span></div>';
+  html += '<h4 style="margin:14px 0 6px;color:#0A2F52">👨‍✈️ Crew Change</h4>';
+  html += '<div class="detail-row"><b>Crew ON</b><span>'+(crew.on||[]).length+' orang</span></div>';
+  html += '<div class="detail-row"><b>Crew OFF</b><span>'+(crew.off||[]).length+' orang</span></div>';
+  if((crew.on||[]).length){ html += '<p style="font-size:12px;margin:6px 0"><b>Naik:</b><br>'+crew.on.map(function(c){ return '- '+c.nama+' | '+(c.passport||'')+' | '+(c.jabatan||''); }).join('<br>')+'</p>'; }
+  if((crew.off||[]).length){ html += '<p style="font-size:12px;margin:6px 0"><b>Turun:</b><br>'+crew.off.map(function(c){ return '- '+c.nama+' | '+(c.passport||'')+' | '+(c.jabatan||''); }).join('<br>')+'</p>'; }
+  html += '<h4 style="margin:14px 0 6px;color:#0A2F52">📦 Provision</h4>';
+  html += '<p style="font-size:12px">'+(prov ? JSON.stringify(prov).slice(0,300) : 'Belum ada data provision')+'</p>';
+  html += '<h4 style="margin:14px 0 6px;color:#dc3545">🚨 Insiden ('+insidenKapal.length+')</h4>';
+  if(insidenKapal.length){ html += insidenKapal.map(function(x){ return '<p style="font-size:12px;background:#FFF3CD;padding:8px;border-radius:8px"><b>'+(x.tgl||'')+' - '+(x.jenis||'')+'</b><br>'+(x.kronologi||'')+'</p>'; }).join(''); } else { html += '<p style="font-size:12px">Tidak ada insiden</p>'; }
+  document.getElementById('detailIsi').innerHTML = html;
+  document.getElementById('modalDetail').style.display='flex';
+  document.querySelectorAll('.slide video').forEach(function(v){ v.pause(); });
+}
+function tutupDetail(){
+  document.getElementById('modalDetail').style.display='none';
+  document.querySelectorAll('.slide video').forEach(function(v,i){ if(i===slideIndex-1) v.play().catch(function(){}); });
+}
+function renderKatalog(){
+  let c=document.getElementById('katalogContainer');
+  if(!DB.kapal.length){ c.innerHTML='<div style="grid-column:1/-1;text-align:center;padding:40px;color:#d4af37;">Belum ada data kapal</div>'; return; }
+  c.innerHTML='';
+  DB.kapal.forEach(function(k,i){
+    let v=videoHariIni()[i % videoHariIni().length];
+    c.innerHTML += '<div class="katalog-card">'+mediaHtml(v)+'<div class="katalog-info"><h4>⚓ '+(k.nama||'')+'</h4><div style="font-size:12px;color:#666;">Pelabuhan: '+(k.pelabuhan||'-')+' | '+(k.bendera||'')+'</div><div class="harga">'+(k.eta||'-')+' s/d '+(k.etd||'-')+'</div>'+getStatus(k.status)+'</div><button class="btn-backup btn-hijau" style="width:100%;padding:10px" onclick="bukaDetail('+i+')">👁️ VIEW DETAIL</button></div>';
+  });
+}
+function geserSlide(n){ showSlides(slideIndex+=n); }
+function currentSlide(n){ showSlides(slideIndex=n); }
+function showSlides(n){
+  let slides=document.querySelectorAll(".slide"); let dots=document.querySelectorAll(".dot");
+  if(!slides.length) return; if(n>slides.length){slideIndex=1} if(n<1){slideIndex=slides.length}
+  let el=document.querySelector(".slides"); if(el) el.style.transform='translateX(-'+(slideIndex-1)*100+'%)';
+  dots.forEach(function(d){ d.classList.remove("active"); }); if(dots[slideIndex-1]) dots[slideIndex-1].classList.add("active");
+  document.querySelectorAll('.slide video').forEach(function(vid,idx){ if(idx===slideIndex-1) vid.play().catch(function(){}); else vid.pause(); });
+}
+setInterval(function(){ geserSlide(1); },8000);
+function pilihSemuaHari(ya){ document.querySelectorAll('.cek-hari').forEach(function(c){ c.checked=ya; }); }
+function pilihWeekend(){ document.querySelectorAll('.cek-hari').forEach(function(c){ c.checked = (c.value==='Sabtu'||c.value==='Minggu'); }); }
+function pilihWeekday(){ document.querySelectorAll('.cek-hari').forEach(function(c){ c.checked = ['Senin','Selasa','Rabu','Kamis','Jumat'].includes(c.value); }); }
+function pilihFileVideo(event){
+  let file = event.target.files[0];
+  if(!file) return;
+  fileVideoTerpilih = file;
+  urlFileVideoLocal = URL.createObjectURL(file);
+  document.getElementById('videoUrl').value = urlFileVideoLocal;
+  document.getElementById('namaFileVideo').innerText = '✅ File terpilih: ' + file.name + ' (' + (file.size/1024/1024).toFixed(1) + ' MB) - Tinggal pilih hari, terus klik SIMPAN VIDEO!';
+}
+function simpanVideo(){
+  let judul=document.getElementById('videoJudul').value.trim();
+  let url=document.getElementById('videoUrl').value.trim();
+  let hari=[].map.call(document.querySelectorAll('.cek-hari:checked'), function(c){ return c.value; });
+  if(!judul){ alert('Isi Judul Video dulu!'); return; }
+  if(!url && !urlFileVideoLocal){ alert('Pilih file MP4 dulu atau isi Link Video dulu!'); return; }
+  if(!hari.length){ alert('Pilih minimal 1 hari!'); return; }
+  if(!DB.videos) DB.videos=[];
+  let urlFinal = urlFileVideoLocal || url;
+  if(DB.videos.find(function(x){ return String(x.url)===String(urlFinal); })){ alert('Video ini sudah ada! Tidak ditambah lagi biar tidak duplikat.'); return; }
+  DB.videos.push({id:Date.now(), judul:judul, url:urlFinal, hari:hari, dariFile: !!fileVideoTerpilih});
+  simpanDB(); renderAll();
+  document.getElementById('videoJudul').value='';
+  document.getElementById('videoUrl').value='';
+  document.getElementById('fileVideo').value='';
+  document.getElementById('namaFileVideo').innerText='';
+  fileVideoTerpilih=null; urlFileVideoLocal="";
+  pilihSemuaHari(false);
+  document.getElementById('statusVideo').innerText='✅ Video tersimpan! Diputar hari: '+hari.join(', ');
+}
+function pakaiVideoContoh(){
+  if(!DB.videos) DB.videos=[];
+  let contoh = [
+    {id:'contoh1', judul:'Kapal Pesiar di Laut Lepas', url:'https://videos.pexels.com/video-files/1093662/1093662-hd_1920_1080_30fps.mp4', hari:['Senin','Selasa','Rabu','Kamis','Jumat','Sabtu','Minggu']},
+    {id:'contoh2', judul:'Kapal Pesiar Meninggalkan Pelabuhan', url:'https://cdn.pixabay.com/video/2020/05/25/40130-424930032_large.mp4', hari:['Senin','Selasa','Rabu','Kamis','Jumat','Sabtu','Minggu']},
+    {id:'contoh3', judul:'Laut Biru dari Kapal Pesiar - Weekend', url:'https://videos.pexels.com/video-files/3015510/3015510-hd_1920_1080_24fps.mp4', hari:['Sabtu','Minggu']}
+  ];
+  let ditambah=0;
+  contoh.forEach(function(v){ let ada=DB.videos.find(function(x){ return String(x.id)===String(v.id) || x.url===v.url; }); if(!ada){ DB.videos.push(v); ditambah++; } });
+  if(ditambah===0){ alert('Video contoh sudah ada semua!'); return; }
+  simpanDB(); renderAll();
+  alert('✅ Berhasil! Ditambah '+ditambah+' video contoh!');
+}
+function tambahVideoTitanic(){
+  if(!DB.videos) DB.videos=[];
+  let titanic = [
+    {id:'titanic-mp4-1', judul:'TITANIC - Kapal Besar di Laut Lepas', url:'https://videos.pexels.com/video-files/1093662/1093662-hd_1920_1080_30fps.mp4', hari:['Senin','Selasa','Rabu','Kamis','Jumat','Sabtu','Minggu']},
+    {id:'titanic-mp4-2', judul:'TITANIC - Kapal Meninggalkan Pelabuhan', url:'https://cdn.pixabay.com/video/2020/05/25/40130-424930032_large.mp4', hari:['Senin','Selasa','Rabu','Kamis','Jumat','Sabtu','Minggu']},
+    {id:'titanic-mp4-3', judul:'TITANIC - Laut Biru - Weekend', url:'https://videos.pexels.com/video-files/3015510/3015510-hd_1920_1080_24fps.mp4', hari:['Sabtu','Minggu']}
+  ];
+  let ditambah=0;
+  titanic.forEach(function(v){ let ada=DB.videos.find(function(x){ return String(x.id)===String(v.id) || x.url===v.url; }); if(!ada){ DB.videos.push(v); ditambah++; } });
+  if(ditambah===0){ alert('Video Titanic sudah ada semua!'); return; }
+  simpanDB(); renderAll();
+  alert('✅ Berhasil! Ditambah '+ditambah+' video Titanic (MP4, tanpa Error 153)!');
+}
+function hapusVideo(id){ if(!confirm('Hapus video ini?')) return; DB.videos=(DB.videos||[]).filter(function(v){ return String(v.id)!==String(id); }); simpanDB(); renderAll(); }
+function renderListVideo(){
+  let el=document.getElementById('listVideo');
+  if(!DB.videos.length){ el.innerHTML='<p>Belum ada video</p>'; return; }
+  let html='<h4 style="margin:14px 0 6px">📋 Daftar Video ('+(DB.videos||[]).length+') - Hari ini: '+HARI_INI+'</h4>';
+  DB.videos.forEach(function(v){
+    let aktif=(v.hari||[]).includes(HARI_INI);
+    let tombolHari = NAMA_HARI.map(function(h){ return '<button onclick="toggleHari(\''+v.id+'\',\''+h+'\')" style="padding:4px 8px;border-radius:20px;border:1px solid #ddd;background:'+((v.hari||[]).includes(h)?'#d4af37':'#fff')+';font-size:11px;cursor:pointer">'+h+' '+((v.hari||[]).includes(h)?'✅':'')+'</button>'; }).join('');
+    html += '<div style="background:#fff;border:2px solid '+(aktif?'#22c55e':'#ddd')+';border-radius:10px;padding:10px;margin-bottom:8px;display:flex;gap:10px;align-items:center"><video src="'+v.url+'" style="width:110px;height:70px;object-fit:cover;border-radius:8px" muted playsinline preload="metadata"></video><div style="flex:1"><b>'+v.judul+'</b> '+(aktif?'<span style="background:#22c55e;color:#fff;padding:2px 8px;border-radius:20px;font-size:10px">▶️ DIPUTAR HARI INI</span>':'<span style="background:#eee;padding:2px 8px;border-radius:20px;font-size:10px">⏸️ TIDAK DIPUTAR HARI INI</span>')+'<br><span style="font-size:11px">📅 '+(v.hari||[]).join(', ')+'</span><br><div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:4px">'+tombolHari+'</div></div><button onclick="hapusVideo(\''+v.id+'\')" style="background:#FFE0E0;color:#B00000;border:0;padding:8px 10px;border-radius:8px;font-weight:800;cursor:pointer">🗑️</button></div>';
+  });
+  el.innerHTML=html;
+}
+function toggleHari(id, hari){ let v=(DB.videos||[]).find(function(x){ return String(x.id)===String(id); }); if(!v) return; if(!v.hari) v.hari=[]; if(v.hari.includes(hari)) v.hari=v.hari.filter(function(h){ return h!==hari; }); else v.hari.push(hari); simpanDB(); renderAll(); }
+async function buatBackup(){
+  document.getElementById('statusBackup').innerText = "⏳ Membuat backup...";
+  try{
+    let backup = { tanggal: new Date().toLocaleString('id-ID'), timestamp: Date.now(), data: DB, total_kapal: (DB.kapal||[]).length, total_crew: hitungCrew().total, total_insiden: (DB.insiden||[]).length };
+    backupTerakhir = backup;
+    await db.collection("backups_indonusa").add(backup);
+    downloadJSON(backup, "backup-indonusa-" + new Date().toISOString().slice(0,10) + ".json");
+    document.getElementById('statusBackup').innerText = "✅ Backup berhasil! " + backup.total_kapal + " kapal | " + backup.total_crew + " crew | " + backup.total_insiden + " insiden";
+    loadBackupList();
+  }catch(e){ document.getElementById('statusBackup').innerText = "❌ Gagal backup: " + e.message; }
+}
+function downloadJSON(d,n){ let b=new Blob([JSON.stringify(d,null,2)],{type:"application/json"}); let a=document.createElement("a"); a.href=URL.createObjectURL(b); a.download=n; a.click(); }
+function exportBackupJSON(){ if(!backupTerakhir){ alert("Belum ada backup!"); return; } downloadJSON(backupTerakhir,"backup-indonusa-terakhir.json"); }
+async function loadBackupList(){
+  document.getElementById('tabelBackup').style.display="table";
+  let tb=document.querySelector("#tabelBackup tbody");
+  tb.innerHTML="<tr><td colspan='5'>⏳ Memuat...</td></tr>";
+  try{
+    let snap=await db.collection("backups_indonusa").orderBy("timestamp","desc").limit(10).get();
+    if(snap.empty){ tb.innerHTML="<tr><td colspan='5'>Belum ada backup</td></tr>"; return; }
+    let h="";
+    snap.forEach(function(doc){ let b=doc.data(); h+='<tr><td>'+(b.tanggal||'-')+'</td><td>'+(b.total_kapal||0)+'</td><td>'+(b.total_crew||0)+'</td><td>'+(b.total_insiden||0)+'</td><td><button class="btn-backup btn-biru" onclick="lihatDetailBackup(\''+doc.id+'\')">👀 Lihat</button> <button class="btn-backup btn-hijau" onclick="restoreBackup(\''+doc.id+'\')">♻️ Restore</button></td></tr>'; });
+    tb.innerHTML=h;
+  }catch(e){ tb.innerHTML="<tr><td colspan='5'>❌ "+e.message+"</td></tr>"; }
+}
+async function lihatDetailBackup(id){ let doc=await db.collection("backups_indonusa").doc(id).get(); let b=doc.data(); let el=document.getElementById('backupDetail'); el.style.display="block"; el.innerText="BACKUP: "+b.tanggal+"\n\nKAPAL:\n"+(b.data.kapal||[]).map(function(k){ return "- "+k.nama; }).join("\n"); el.scrollIntoView({behavior:'smooth'}); }
+async function restoreBackup(id){ let doc=await db.collection("backups_indonusa").doc(id).get(); restoreYangDipilih={data:doc.data()}; bukaModalWarning(doc.data(),"Firestore"); }
+async function siapkanRestoreFile(e){ let f=e.target.files[0]; if(!f) return; let b=JSON.parse(await f.text()); restoreYangDipilih={data:b}; bukaModalWarning(b,"File: "+f.name); e.target.value=""; }
+function bukaModalWarning(b,s){ document.getElementById('isiWarningRestore').innerHTML='<b>Backup:</b> '+s+' | '+(b.tanggal||'-')+'<br>Isi: <b>'+(b.total_kapal||0)+' Kapal</b><br>Sekarang: <b>'+(DB.kapal||[]).length+' Kapal</b>'; document.getElementById('cekSetuju').checked=false; document.getElementById('ketikRestore').value=""; document.getElementById('btnKonfirmasiRestore').disabled=true; document.getElementById('modalRestore').style.display="flex"; }
+function cekTombolRestore(){ let cek=document.getElementById('cekSetuju').checked; let ketik=document.getElementById('ketikRestore').value.trim().toUpperCase(); document.getElementById('btnKonfirmasiRestore').disabled = !(cek && ketik==="RESTORE"); }
+function tutupModalRestore(){ document.getElementById('modalRestore').style.display="none"; restoreYangDipilih=null; }
+async function jalankanRestore(){
+  if(!restoreYangDipilih) return;
+  let b=restoreYangDipilih.data;
+  let dbk=b.data||b;
+  document.getElementById('modalRestore').style.display="none";
+  try{
+    let ditambah=0, dilewati=0;
+    (dbk.kapal||[]).forEach(function(k){ let ada=(DB.kapal||[]).find(function(x){ return String(x.id)===String(k.id)||(x.nama||'').toLowerCase()===(k.nama||'').toLowerCase(); }); if(ada) dilewati++; else {DB.kapal.push(k); ditambah++;} });
+    (dbk.insiden||[]).forEach(function(x){ let ada=(DB.insiden||[]).find(function(y){ return String(y.id)===String(x.id); }); if(ada) dilewati++; else {DB.insiden.push(x); ditambah++;} });
+    (dbk.videos||[]).forEach(function(v){ if(v.youtube) return; let ada=(DB.videos||[]).find(function(y){ return String(y.id)===String(v.id) || String(y.url)===String(v.url); }); if(ada) dilewati++; else {DB.videos.push(v); ditambah++;} });
+    simpanDB();
+    alert("✅ Restore selesai! Ditambah: "+ditambah+" | Dilewati: "+dilewati);
+    renderAll();
+  }catch(e){ alert("❌ Gagal restore: "+e.message); }
+}
+</script>
+</body>
+</html>

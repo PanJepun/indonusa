@@ -1,0 +1,129 @@
+<!DOCTYPE html><html lang="id"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Semua Data - INDONUSA</title><link rel="stylesheet" href="style.css">
+<style>
+.seksi{background:#F6F8FB;border:1px solid #ddd;border-radius:12px;padding:12px;margin:12px 0}
+.seksi h3{margin:0 0 8px;font-size:15px}
+.tabel-data{width:100%;border-collapse:collapse;font-size:13px;margin-top:8px;background:#fff}
+.tabel-data th,.tabel-data td{border:1px solid #ddd;padding:8px;text-align:left;vertical-align:top}
+.tabel-data th{background:#0A2F52;color:#fff}
+.badge{background:#FFF3CD;padding:2px 8px;border-radius:20px;font-weight:800;font-size:11px;white-space:nowrap}
+.foto-kecil{width:60px;height:60px;object-fit:cover;border-radius:8px;margin:2px;border:1px solid #ddd}
+.filter{ display:flex;gap:8px;flex-wrap:wrap;margin:10px 0 }
+.filter input,.filter select{flex:1;min-width:140px;padding:9px;border-radius:8px;border:1px solid #ddd;box-sizing:border-box}
+@media(max-width:700px){ .filter{flex-direction:column} }
+</style>
+</head>
+<body><div class="top"><div><b>⚓ INDONUSA MARINE</b></div></div>
+<div class="wrap"><div class="menu" id="menu"></div><div class="main">
+
+<div class="card">
+  <h3 style="margin:0">📁 Semua Data - Rekap Semua Menu</h3>
+  <p style="font-size:12px;color:#666;margin:6px 0">Halaman ini menampilkan semua data yang sudah tersimpan: Kapal Masuk, Clearance, Crew Change, Provision & Bunker, Finance, dan Insiden.</p>
+  <div class="filter">
+    <input id="cariSemua" placeholder="Cari nama kapal..." oninput="renderSemua()">
+    <select id="filterSemua" onchange="renderSemua()">
+      <option value="SEMUA">Tampilkan: Semua Bagian</option>
+      <option value="KAPAL">Kapal Masuk saja</option>
+      <option value="CLEARANCE">Clearance saja</option>
+      <option value="CREW">Crew Change saja</option>
+      <option value="PROVISION">Provision & Bunker saja</option>
+      <option value="FINANCE">Finance saja</option>
+      <option value="INSIDEN">Insiden saja</option>
+    </select>
+  </div>
+  <div id="ringkasan" style="font-size:13px;font-weight:700"></div>
+</div>
+
+<div id="isiSemua"></div>
+
+<div class="card" style="margin-top:12px">
+  <button class="btn" onclick="exportSemuaCSV()">📥 Export Semua Ke CSV</button>
+  <button class="btn" style="background:#B00000;margin-top:8px" onclick="hapusDataSampah()">🗑️ Hapus Data Coba-Coba (fffraf, 111, dll)</button>
+  <p style="font-size:11px;color:#888">Tombol kedua hanya menghapus kapal yang namanya terlihat seperti data coba-coba. Data asli tidak ikut terhapus.</p>
+</div>
+
+</div></div>
+<script src="db.js"></script><script>menu('semua.html');
+function cari(){
+  return (document.getElementById('cariSemua').value||'').toLowerCase();
+}
+function cocok(nama){
+  let c=cari();
+  return !c || (nama||'').toLowerCase().includes(c);
+}
+function renderSemua(){
+  let mode=document.getElementById('filterSemua').value;
+  let tampil=(bagian)=> mode==='SEMUA' || mode===bagian;
+  let html='';
+  let total=0;
+
+  // 1. KAPAL MASUK
+  if(tampil('KAPAL')){
+    let list=(DB.kapal||[]).filter(k=>cocok(k.nama));
+    total+=list.length;
+    html+=`<div class="seksi"><h3>⚓ 1. Kapal Masuk - ${list.length} kapal</h3>${list.length?`<table class="tabel-data"><tr><th>Kapal</th><th>Pelabuhan</th><th>ETA - ETD</th><th>Agent</th><th>Status</th></tr>${list.map(k=>`<tr><td><b>${k.nama}</b><br><span style="color:#888;font-size:11px">${k.bendera||''} | ${k.callSign||''}</span></td><td>${k.pelabuhan||'-'}</td><td>${k.eta||'-'} s/d ${k.etd||'-'}</td><td>${k.agent||'-'}</td><td><span class="badge">${k.status||'ARRIVAL'}</span></td></tr>`).join('')}</table>`:'<i>Belum ada data kapal yang cocok.</i>'}</div>`;
+  }
+
+  // 2. CLEARANCE
+  if(tampil('CLEARANCE')){
+    let keys=Object.keys(DB.clearance||{}).filter(k=>cocok(k));
+    total+=keys.length;
+    html+=`<div class="seksi"><h3>📋 2. Clearance - ${keys.length} kapal</h3>${keys.length?`<table class="tabel-data"><tr><th>Kapal</th><th>Clearance In</th><th>Clearance Out</th><th>Keterangan</th></tr>${keys.map(k=>{let d=DB.clearance[k];return `<tr><td><b>${k}</b></td><td>${d.in||d.clearanceIn||'-'}</td><td>${d.out||d.clearanceOut||'-'}</td><td>${d.ket||d.keterangan||'-'}</td></tr>`}).join('')}</table>`:'<i>Belum ada data clearance.</i>'}</div>`;
+  }
+
+  // 3. CREW CHANGE
+  if(tampil('CREW')){
+    let keys=Object.keys(DB.crewChange||{}).filter(k=>cocok(k));
+    let jmlOn=0, jmlOff=0;
+    keys.forEach(k=>{ jmlOn+=(DB.crewChange[k].on||[]).length; jmlOff+=(DB.crewChange[k].off||[]).length; });
+    total+=jmlOn+jmlOff;
+    html+=`<div class="seksi"><h3>👨‍✈️ 3. Crew Change - ${keys.length} kapal, ${jmlOn} naik, ${jmlOff} turun</h3>${keys.length?keys.map(k=>{let d=DB.crewChange[k];return `<b>⚓ ${k}</b> - ${d.tgl||''}<br><table class="tabel-data"><tr><th>Nama</th><th>Passport</th><th>Jabatan</th><th>Kebangsaan</th><th>Status</th></tr>${(d.on||[]).map(c=>`<tr><td>${c.nama}</td><td>${c.passport}</td><td>${c.jabatan||'-'}</td><td>${c.kebangsaan||'-'}</td><td>🟢 NAIK</td></tr>`).join('')}${(d.off||[]).map(c=>`<tr><td>${c.nama}</td><td>${c.passport}</td><td>${c.jabatan||'-'}</td><td>${c.kebangsaan||'-'}</td><td>🔴 TURUN</td></tr>`).join('')}</table><br>`}).join(''):'<i>Belum ada data crew change.</i>'}</div>`;
+  }
+
+  // 4. PROVISION & BUNKER
+  if(tampil('PROVISION')){
+    let keys=Object.keys(DB.provision||{}).filter(k=>cocok(k));
+    total+=keys.length;
+    html+=`<div class="seksi"><h3>📦 4. Provision & Bunker - ${keys.length} kapal</h3>${keys.length?keys.map(k=>{let d=DB.provision[k]; let items=[]; if(Array.isArray(d)) items=d; else if(Array.isArray(d.items)) items=d.items; else items=[d]; return `<b>⚓ ${k}</b><table class="tabel-data"><tr><th>Item</th><th>Jumlah</th><th>Keterangan</th></tr>${items.map(it=>`<tr><td>${it.nama||it.item||'-'}</td><td>${it.qty||it.jumlah||'-'} ${it.satuan||''}</td><td>${it.ket||it.keterangan||'-'}</td></tr>`).join('')}</table><br>`}).join(''):'<i>Belum ada data provision.</i>'}</div>`;
+  }
+
+  // 5. FINANCE
+  if(tampil('FINANCE')){
+    let list=(DB.finance||DB.keuangan||[]).filter(x=>cocok(x.kapal||x.namaKapal));
+    total+=list.length;
+    html+=`<div class="seksi"><h3>💰 5. Finance / D/A - ${list.length} data</h3>${list.length?`<table class="tabel-data"><tr><th>Kapal</th><th>Uraian</th><th>Jumlah</th><th>Tanggal</th></tr>${list.map(x=>`<tr><td>${x.kapal||x.namaKapal||'-'}</td><td>${x.uraian||x.keterangan||x.item||'-'}</td><td>${x.jumlah||x.nominal||x.total||'-'}</td><td>${x.tgl||x.tanggal||'-'}</td></tr>`).join('')}</table>`:'<i>Belum ada data finance.</i>'}</div>`;
+  }
+
+  // 6. INSIDEN
+  if(tampil('INSIDEN')){
+    let list=(DB.insiden||[]).filter(x=>cocok(x.kapal));
+    total+=list.length;
+    html+=`<div class="seksi"><h3>🚨 6. Insiden - ${list.length} laporan</h3>${list.length?list.map(x=>`<div style="background:#fff;border:1px solid #ddd;border-radius:10px;padding:10px;margin-bottom:10px"><b>⚓ ${x.kapal}</b> - ${x.tgl||''} - ${x.jenis||''}<br><b>Lokasi:</b> ${x.lokasi||'-'}<br><b>Kronologi:</b> ${x.kronologi||'-'}<br><b>Tindakan:</b> ${x.tindakan||'-'}<br>${(x.foto||[]).length?`<b>Foto (${x.foto.length}):</b><br>${x.foto.map(f=>`<a href="${f}" target="_blank"><img src="${f}" class="foto-kecil"></a>`).join('')}`:'<i>Tidak ada foto</i>'}</div>`).join(''):'<i>Belum ada data insiden.</i>'}</div>`;
+  }
+
+  document.getElementById('isiSemua').innerHTML=html || '<p>Belum ada data.</p>';
+  document.getElementById('ringkasan').innerText='Total yang ditampilkan: '+total+' data. Jika terlihat sedikit, berarti memang baru itu data yang tersimpan di perangkat ini.';
+}
+function hapusDataSampah(){
+  let sampah=['fffraf','111','test','tes','coba','asdf','qwerty','123','xxx'];
+  let awal=(DB.kapal||[]).length;
+  DB.kapal=(DB.kapal||[]).filter(k=>!sampah.includes((k.nama||'').toLowerCase().trim()));
+  // Bersihkan juga dari modul lain agar tidak muncul lagi
+  sampah.forEach(n=>{
+    if(DB.clearance) delete DB.clearance[n];
+    if(DB.crewChange) delete DB.crewChange[n];
+    if(DB.provision) delete DB.provision[n];
+  });
+  DB.insiden=(DB.insiden||[]).filter(x=>!sampah.includes((x.kapal||'').toLowerCase().trim()));
+  save(); renderSemua();
+  alert('Selesai. Dihapus '+(awal-(DB.kapal||[]).length)+' kapal data coba-coba. Data asli tetap aman.');
+}
+function exportSemuaCSV(){
+  let rows=[['Bagian','Kapal','Detail','Tanggal']];
+  (DB.kapal||[]).forEach(k=>rows.push(['Kapal Masuk',k.nama||'',(k.pelabuhan||'')+' | '+(k.status||''),k.eta||'']));
+  Object.keys(DB.crewChange||{}).forEach(k=>{ (DB.crewChange[k].on||[]).forEach(c=>rows.push(['Crew ON',k,c.nama+' | '+c.passport+' | '+c.jabatan,DB.crewChange[k].tgl||''])); (DB.crewChange[k].off||[]).forEach(c=>rows.push(['Crew OFF',k,c.nama+' | '+c.passport+' | '+c.jabatan,DB.crewChange[k].tgl||''])); });
+  (DB.insiden||[]).forEach(x=>rows.push(['Insiden',x.kapal||'',(x.jenis||'')+' | '+(x.kronologi||''),x.tgl||'']));
+  let csv=rows.map(r=>r.map(c=>'"'+String(c).replace(/"/g,'""')+'"').join(',')).join('\n');
+  let a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'})); a.download='semua-data-indonusa.csv'; a.click();
+}
+renderSemua();
+</script></body></html>

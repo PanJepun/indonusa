@@ -1,0 +1,15 @@
+<!DOCTYPE html><html lang="id"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Kapal - INDONUSA</title><link rel="stylesheet" href="style.css"></head>
+<body><div class="top"><div><b>⚓ INDONUSA MARINE</b></div><button onclick="window.print()">🖨️ PRINT</button></div>
+<div class="wrap"><div class="menu" id="menu"></div><div class="main"><div class="card"><h3>🚢 Input Kapal Baru</h3>
+<label>Nama Kapal *</label><input id="nama" placeholder="MY SEAHORSE">
+<div style="display:flex;gap:10px"><div style="flex:1"><label>Bendera</label><input id="bendera" placeholder="Marshall Islands"></div><div style="flex:1"><label>LOA / GT</label><input id="loa" placeholder="45m / 499 GT"></div></div>
+<div style="display:flex;gap:10px"><div style="flex:1"><label>Pelabuhan</label><select id="pelabuhan"><option>Benoa - Bali</option><option>Lembar - Lombok</option><option>Benete - Sumbawa</option><option>Sorong - Papua</option><option>Lainnya</option></select></div><div style="flex:1"><label>ETA</label><input type="date" id="eta"></div><div style="flex:1"><label>ETD</label><input type="date" id="etd"></div></div>
+<div style="display:flex;gap:10px"><div style="flex:1"><label>Crew</label><input type="number" id="crew" value="10"></div><div style="flex:1"><label>Guest</label><input type="number" id="guest" value="0"></div><div style="flex:1"><label>Agent</label><input id="agent"></div></div>
+<label>Keperluan</label><select id="perlu"><option>Clearance + Provision</option><option>Bunker</option><option>Crew Change</option><option>Repair</option><option>Expedition</option></select>
+<label>Catatan / No HP Kapten</label><textarea id="catat"></textarea>
+<button class="btn" onclick="simpan()">💾 SIMPAN KAPAL</button></div></div></div>
+<script src="db.js"></script><script>menu('kapal.html');
+function simpan(){let n=document.getElementById('nama').value.trim();if(!n){alert('Isi Nama Kapal dulu beb!');return;}
+DB.kapal.unshift({id:Date.now(),nama:n,bendera:document.getElementById('bendera').value,loa:document.getElementById('loa').value,pelabuhan:document.getElementById('pelabuhan').value,eta:document.getElementById('eta').value,etd:document.getElementById('etd').value,crew:document.getElementById('crew').value,guest:document.getElementById('guest').value,agent:document.getElementById('agent').value,perlu:document.getElementById('perlu').value,catat:document.getElementById('catat').value,status:'ARRIVAL'});
+save();alert('BERHASIL BEB! Kapal '+n+' tersimpan beb!');location.href='data.html';}
+</script></body></html>

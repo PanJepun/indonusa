@@ -1,0 +1,16 @@
+<!DOCTYPE html><html lang="id"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Dashboard - INDONUSA</title><link rel="stylesheet" href="style.css"></head>
+<body><div class="top"><div><b>⚓ INDONUSA MARINE</b><br><span>PT. INDONUSA TENGGARA MARINE</span></div><button onclick="window.print()">🖨️ PRINT</button></div>
+<div class="wrap"><div class="menu" id="menu"></div><div class="main">
+<div class="grid"><div class="kpi">Total Kapal<b id="kTotal">0</b></div><div class="kpi">Kapal Aktif<b id="kAktif">0</b></div><div class="kpi">Crew Change<b id="kCrew">0</b></div><div class="kpi">Total D/A<b id="kUang">Rp 0</b></div></div>
+<div class="card"><h3>🚢 Kapal Terbaru</h3><div id="lastKapal"></div></div>
+<div class="card"><h3>👨‍✈️ Crew Change Terbaru</h3><div id="lastCrew"></div></div>
+<div class="card"><h3>⚠️ Pengingat</h3><p>• Cek Cruising Permit sebelum kapal datang beb!<br>• Respon kapten max 2 jam beb!<br>• Final D/A max 7 hari setelah berangkat beb!</p></div>
+</div></div>
+<script src="db.js"></script><script>menu('index.html');
+document.getElementById('kTotal').innerText=DB.kapal.length;
+document.getElementById('kAktif').innerText=DB.kapal.filter(k=>k.status!=='SELESAI').length;
+document.getElementById('kCrew').innerText=DB.crew.length;
+document.getElementById('kUang').innerText='Rp '+DB.uang.reduce((s,x)=>s+(Number(x.jml)||0),0).toLocaleString('id-ID');
+document.getElementById('lastKapal').innerHTML=DB.kapal.slice(0,5).map(k=>`<div style="padding:10px;border-bottom:1px solid #eee"><b>${k.nama}</b> - ${k.pelabuhan} - ETA ${k.eta||'-'}</div>`).join('')||'Belum ada kapal beb!';
+document.getElementById('lastCrew').innerHTML=DB.crew.slice(0,5).map(c=>`<div style="padding:10px;border-bottom:1px solid #eee"><b>${c.kapalNama}</b> - ON: ${c.on||'-'} | OFF: ${c.off||'-'}</div>`).join('')||'Belum ada crew change beb!';
+</script></body></html>

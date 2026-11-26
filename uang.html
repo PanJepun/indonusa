@@ -1,0 +1,220 @@
+<!DOCTYPE html><html lang="id"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Finance D/A - INDONUSA</title><link rel="stylesheet" href="style.css">
+<style>
+.card-top{position:sticky;top:60px;z-index:100;background:#fff;padding:10px 14px !important}
+.card-top-head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:8px}
+.card-top-head h3{margin:0;font-size:16px}
+.btn-save-atas{background:#F5B301;color:#000;border:0;padding:8px 14px;border-radius:8px;font-weight:900;font-size:13px;cursor:pointer;white-space:nowrap;flex-shrink:0}
+.top-inputs{display:flex;gap:8px}
+.top-inputs>div{flex:1}
+.top-inputs label{display:block;font-size:11px;font-weight:700;margin-bottom:3px;color:#0A2F52}
+.top-inputs input,.top-inputs select{width:100%;padding:8px 10px !important;font-size:13px !important;border-radius:8px !important;margin:0 !important;box-sizing:border-box}
+.card-bawah{max-height:78vh;overflow-y:auto;padding-right:4px}
+.card-bawah::-webkit-scrollbar{width:8px}
+.card-bawah::-webkit-scrollbar-thumb{background:#0A2F52;border-radius:10px}
+.biaya-row{display:flex;gap:8px;margin-bottom:8px;align-items:flex-start}
+.biaya-row select{flex:2;min-width:0}
+.biaya-row input{flex:1;min-width:0}
+.biaya-row .btn-plus{flex:0 0 36px;height:42px;background:#8ED68E;color:#0A2F52;border:0;border-radius:8px;font-weight:900;cursor:pointer;font-size:18px}
+.biaya-row .btn-minus{flex:0 0 36px;height:42px;background:#FFE0E0;color:#B00000;border:0;border-radius:8px;font-weight:900;cursor:pointer;font-size:18px}
+/* ⭐ TOMBOL UTAMA YANG GANTI-GANTI BEB! ⭐ */
+.btn-aksi{width:100%;padding:13px;border:0;border-radius:10px;font-weight:900;font-size:15px;cursor:pointer;margin-top:10px;transition:0.2s}
+.btn-aksi.tambah{background:#0A2F52;color:#fff}
+.btn-aksi.save{background:#F5B301;color:#000}
+.btn-baru{background:#8ED68E;color:#0A2F52;border:0;padding:9px 14px;border-radius:8px;font-weight:900;cursor:pointer}
+.filter-box{display:flex;gap:8px;align-items:end;margin:10px 0;background:#F6F8FB;padding:10px;border-radius:10px;border:1px solid #ddd}
+.filter-box>div{flex:1}
+.filter-box label{font-size:11px;font-weight:700}
+.filter-box select,.filter-box input{width:100%;padding:8px;border-radius:8px;margin-top:3px;box-sizing:border-box}
+.tabel-data{width:100%;border-collapse:collapse;font-size:13px;margin-top:8px}
+.tabel-data th,.tabel-data td{border:1px solid #ddd;padding:8px;text-align:left}
+.tabel-data th{background:#0A2F52;color:#fff}
+.total-box{background:#FFF3CD;padding:10px;border-radius:10px;font-weight:900;text-align:right;margin-top:10px}
+@media(max-width:700px){ .card-top{top:52px} .top-inputs{flex-direction:column} .card-bawah{max-height:none} .filter-box{flex-direction:column} .biaya-row{flex-wrap:wrap} }
+</style>
+</head>
+<body><div class="top"><div><b>⚓ INDONUSA MARINE</b></div></div>
+<div class="wrap"><div class="menu" id="menu"></div><div class="main">
+
+<div class="card card-top">
+  <div class="card-top-head">
+    <h3>💰 Finance D/A</h3>
+    <div style="display:flex;gap:8px"><button class="btn-baru" onclick="tambahBaru()">➕ + TAMBAH BARU</button></div>
+  </div>
+  <div class="top-inputs">
+    <div><label>Nama Kapal</label><input id="daKapalNama" placeholder="MY SEAHORSE"></div>
+    <div><label>Pilih Kapal</label><select id="pilihDA"></select></div>
+    <div><label>Tanggal</label><input type="date" id="daTgl"></div>
+  </div>
+
+  <div style="margin-top:10px">
+    <label style="font-size:11px;font-weight:700;color:#0A2F52">Daftar Biaya Beb - Klik + buat nambah, - buat ngurangin beb!</label>
+    <div id="listBiaya" style="margin-top:6px"></div>
+  </div>
+  <div id="totalInput" style="text-align:right;font-weight:900;background:#FFF3CD;padding:8px;border-radius:8px;margin-top:10px">Total: Rp 0</div>
+
+  <!-- ⭐ TOMBOLNYA CUMA 1 BEB! PERTAMA TAMBAH BIAYA, ABIS DIKLIK JADI SAVE BIAYA BEB! ⭐ -->
+  <button id="btnBiayaAksi" class="btn-aksi tambah" onclick="aksiBiaya()">🧾 TAMBAH BIAYA</button>
+  <p id="hintBiaya" style="font-size:11px;color:#666;text-align:center;margin:6px 0 0">Isi dulu beb Keterangan + Jumlah nya beb, terus klik TAMBAH BIAYA beb!</p>
+</div>
+
+<div class="card card-bawah">
+  <h3 style="margin:0">📊 LAPORAN D/A BEB - Semua Kapal & Per Kapal</h3>
+  <div class="filter-box">
+    <div><label>Laporan Kapal Beb:</label><select id="filterKapal" onchange="renderDA()"><option value="SEMUA">📋 SEMUA KAPAL BEB</option></select></div>
+    <div><label>Dari Tanggal</label><input type="date" id="filterDari" onchange="renderDA()"></div>
+    <div><label>Sampai Tanggal</label><input type="date" id="filterSampai" onchange="renderDA()"></div>
+    <div style="flex:0 0 auto"><button onclick="printLaporan()" style="padding:9px 14px;border:0;border-radius:8px;background:#0A2F52;color:#fff;font-weight:900;cursor:pointer">📄 PRINT D/A BEB</button></div>
+  </div>
+  <div id="infoLaporan" style="font-size:13px;color:#666"></div>
+  <div id="listDA"></div>
+  <div id="totalDA" class="total-box"></div>
+</div>
+
+</div></div>
+<script src="db.js"></script><script>menu('finance.html'); kapalOptions('pilihDA');
+if(!Array.isArray(DB.da)) DB.da=[];
+if(!DB.da.length && DB.finance){ DB.da=Object.keys(DB.finance).map(n=>({kapal:n,biaya:DB.finance[n].biaya||[],tgl:''})); }
+document.getElementById('daTgl').value=new Date().toISOString().slice(0,10);
+document.getElementById('pilihDA').addEventListener('change', function(){let k=DB.kapal.find(x=>x.id==this.value); if(k) document.getElementById('daKapalNama').value=k.nama; });
+let ketList=['Port Clearance','Bunker / BBM','Agent Fee','Crew Change','Provision','Fresh Water','Pilotage','Towage','Port Dues','Anchorage','Customs','Immigration','Quarantine','Launch Boat / Speedboat','Transport / Taxi','Hotel Crew','Flight Ticket Crew','Medical','Spare Parts','Repair / Maintenance','Lashing / Stevedore','Garbage / Sludge Disposal','Lainnya'];
+let ketOptions=ketList.map(k=>`<option value="${k}">${k}</option>`).join('');
+
+// ⭐ MODE TOMBOL NYA BEB! ⭐
+let modeBiaya='tambah'; // pertama beb 'tambah' beb, abis diklik jadi 'save' beb!
+function setModeBiaya(mode){
+  modeBiaya=mode;
+  let btn=document.getElementById('btnBiayaAksi');
+  let hint=document.getElementById('hintBiaya');
+  if(mode==='tambah'){
+    btn.className='btn-aksi tambah'; btn.innerText='🧾 TAMBAH BIAYA';
+    hint.innerText='Isi dulu beb Keterangan + Jumlah nya beb, terus klik TAMBAH BIAYA beb!';
+  } else {
+    btn.className='btn-aksi save'; btn.innerText='💾 SAVE BIAYA';
+    hint.innerText='Udah bener beb biayanya? Klik SAVE BIAYA beb buat nyimpen ke laporan beb!';
+  }
+}
+function buatBiayaRow(data){
+  data=data||{ket:'Port Clearance',jumlah:''};
+  let div=document.createElement('div');
+  div.className='biaya-row';
+  div.innerHTML=`
+    <select class="b-ket"><option value="">-- Keterangan beb --</option>${ketOptions}<option value="__LAINNYA__">✏️ Ketik Sendiri Beb...</option></select>
+    <input class="b-jumlah" type="number" placeholder="Jumlah (Rp)" value="${data.jumlah||''}" oninput="updateTotalInput()">
+    <button class="btn-plus" onclick="tambahBiaya(null,this)" title="Tambah 1 biaya lagi beb">+</button>
+    <button class="btn-minus" onclick="hapusBiaya(this)" title="Kurangi / Hapus biaya ini beb">-</button>`;
+  let sel=div.querySelector('.b-ket');
+  if(data.ket){
+    if(ketList.includes(data.ket)) sel.value=data.ket;
+    else { sel.value='__LAINNYA__'; gantiKeInput(sel, data.ket); }
+  }
+  sel.addEventListener('change', function(){ if(this.value==='__LAINNYA__') gantiKeInput(this,''); });
+  return div;
+}
+function gantiKeInput(sel, val){
+  let inp=document.createElement('input');
+  inp.className='b-ket'; inp.placeholder='Ketik Keterangan beb...'; inp.value=val||'';
+  sel.replaceWith(inp); inp.focus();
+}
+function tambahBiaya(data, btn){
+  let rowBaru=buatBiayaRow(data);
+  if(btn){ btn.parentElement.after(rowBaru); }
+  else { document.getElementById('listBiaya').appendChild(rowBaru); }
+  updateTotalInput();
+}
+function hapusBiaya(btn){
+  let list=document.getElementById('listBiaya');
+  if(list.querySelectorAll('.biaya-row').length<=1){ alert('Minimal 1 baris beb! Kosongin aja beb kalo gak ada biayanya beb!'); return; }
+  if(confirm('Hapus biaya ini beb?')){ btn.parentElement.remove(); updateTotalInput(); }
+}
+function updateTotalInput(){
+  let total=0;
+  document.querySelectorAll('#listBiaya .biaya-row').forEach(r=>{ total+=Number(r.querySelector('.b-jumlah').value||0); });
+  document.getElementById('totalInput').innerText='Total: Rp '+total.toLocaleString('id-ID');
+}
+tambahBiaya();
+
+// ⭐ FUNGSI TOMBOL YANG GANTI-GANTI BEB! ⭐
+function aksiBiaya(){
+  if(modeBiaya==='tambah'){
+    // KLIK PERTAMA BEB = TAMBAH BIAYA BEB!
+    let biaya=kumpulBiaya();
+    if(!biaya.length || !biaya[biaya.length-1].ket || !biaya[biaya.length-1].jumlah){
+      alert('Isi dulu beb Keterangan + Jumlah nya beb, baru klik TAMBAH BIAYA beb!'); return;
+    }
+    tambahBiaya(); // Nambah baris baru beb!
+    setModeBiaya('save'); // ⭐ LANGSUNG GANTI JADI SAVE BIAYA BEB!
+  } else {
+    // KLIK KEDUA BEB = SAVE BIAYA BEB!
+    simpanDA();
+  }
+}
+function kumpulBiaya(){
+  let hasil=[];
+  document.querySelectorAll('#listBiaya .biaya-row').forEach(r=>{
+    let ket=r.querySelector('.b-ket').value.trim();
+    let jumlah=Number(r.querySelector('.b-jumlah').value||0);
+    if(ket||jumlah) hasil.push({ket:ket,jumlah:jumlah});
+  });
+  return hasil;
+}
+function tambahBaru(){
+  document.getElementById('daKapalNama').value='';
+  document.getElementById('pilihDA').value='';
+  document.getElementById('daTgl').value=new Date().toISOString().slice(0,10);
+  document.getElementById('listBiaya').innerHTML='';
+  tambahBiaya();
+  setModeBiaya('tambah'); // Balik lagi ke TAMBAH BIAYA beb!
+  document.getElementById('daKapalNama').focus();
+}
+function simpanDA(){
+  let nama=getNamaKapal('daKapalNama','pilihDA');
+  if(!nama){ alert('Isi Nama Kapal dulu beb!'); return; }
+  let biaya=kumpulBiaya();
+  if(!biaya.length){ alert('Isi dulu beb minimal 1 biaya beb!'); return; }
+  let kurang=biaya.filter(b=>!b.ket||!b.jumlah);
+  if(kurang.length){ alert('Ada biaya beb yang Keterangan / Jumlah nya belum diisi beb!'); return; }
+  let tgl=document.getElementById('daTgl').value||new Date().toISOString().slice(0,10);
+  let total=biaya.reduce((a,b)=>a+Number(b.jumlah),0);
+  DB.da.push({id:Date.now(),kapal:nama,biaya:biaya,tgl:tgl,total:total,tglSimpan:new Date().toLocaleString('id-ID')});
+  save(); renderDA();
+  alert('BERHASIL BEB! ✅\nKapal: '+nama+'\nTotal: Rp '+total.toLocaleString('id-ID')+'\n\n'+biaya.map(b=>'- '+b.ket+' : Rp '+Number(b.jumlah).toLocaleString('id-ID')).join('\n'));
+  document.getElementById('listBiaya').innerHTML=''; tambahBiaya();
+  setModeBiaya('tambah'); // ⭐ ABIS SAVE, BALIK LAGI KE TAMBAH BIAYA BEB!
+}
+function hapusDA(id){
+  if(confirm('Hapus data D/A ini beb?')){ DB.da=DB.da.filter(x=>x.id!==id); save(); renderDA(); }
+}
+function getFiltered(){
+  let fKapal=document.getElementById('filterKapal').value;
+  let dari=document.getElementById('filterDari').value;
+  let sampai=document.getElementById('filterSampai').value;
+  let data=[...DB.da].reverse();
+  if(fKapal!=='SEMUA') data=data.filter(x=>x.kapal===fKapal);
+  if(dari) data=data.filter(x=>x.tgl>=dari);
+  if(sampai) data=data.filter(x=>x.tgl<=sampai);
+  return data;
+}
+function renderDA(){
+  let kapalUnik=[...new Set(DB.da.map(x=>x.kapal))];
+  let sel=document.getElementById('filterKapal');
+  let cur=sel.value;
+  sel.innerHTML='<option value="SEMUA">📋 SEMUA KAPAL BEB</option>'+kapalUnik.map(k=>`<option value="${k}">⚓ ${k} beb</option>`).join('');
+  if(kapalUnik.includes(cur)) sel.value=cur;
+  let data=getFiltered();
+  let total=data.reduce((a,b)=>a+Number(b.total||0),0);
+  document.getElementById('infoLaporan').innerText=data.length?('Menampilkan '+data.length+' D/A beb - Filter: '+(document.getElementById('filterKapal').value==='SEMUA'?'Semua Kapal beb':'Kapal '+document.getElementById('filterKapal').value+' beb')):'Belum ada data beb! Isi dulu beb di atas beb!';
+  if(!data.length){ document.getElementById('listDA').innerHTML=''; document.getElementById('totalDA').innerText=''; return; }
+  document.getElementById('listDA').innerHTML=data.map(x=>`<div style="padding:12px;border:1px solid #ddd;border-radius:10px;margin-bottom:10px;background:#fff"><b>⚓ ${x.kapal}</b> - ${x.tgl||''} - Disimpan: ${x.tglSimpan||''}<br><table class="tabel-data"><tr><th>Keterangan</th><th>Jumlah</th></tr>${x.biaya.map(b=>`<tr><td>${b.ket}</td><td>Rp ${Number(b.jumlah).toLocaleString('id-ID')}</td></tr>`).join('')}</table><div style="text-align:right;font-weight:900;margin-top:6px">Total D/A: Rp ${Number(x.total).toLocaleString('id-ID')}</div><button onclick="hapusDA(${x.id})" style="border:0;background:#FFE0E0;color:#B00000;padding:6px 10px;border-radius:6px;font-weight:800;cursor:pointer;margin-top:6px">🗑️ HAPUS BEB</button></div>`).join('');
+  document.getElementById('totalDA').innerText='TOTAL SEMUA D/A: Rp '+total.toLocaleString('id-ID')+' ('+data.length+' D/A beb)';
+}
+function printLaporan(){
+  let data=getFiltered();
+  if(!data.length){ alert('Belum ada data beb!'); return; }
+  let total=data.reduce((a,b)=>a+Number(b.total||0),0);
+  let fKapal=document.getElementById('filterKapal').value;
+  let rows=data.map(x=>x.biaya.map(b=>`<tr><td>${x.tgl||''}</td><td>${x.kapal}</td><td>${b.ket}</td><td>Rp ${Number(b.jumlah).toLocaleString('id-ID')}</td></tr>`).join('')).join('');
+  let html=`<html><head><title>D/A - ${fKapal}</title><style>body{font-family:Arial;padding:20px}table{width:100%;border-collapse:collapse;font-size:12px}th,td{border:1px solid #000;padding:8px}th{background:#0A2F52;color:#fff}</style></head><body><h2>⚓ PT. INDONUSA TENGGARA MARINE</h2><h3>💰 DISBURSEMENT ACCOUNT (D/A) - ${fKapal==='SEMUA'?'SEMUA KAPAL':fKapal}</h3><p>Periode: ${document.getElementById('filterDari').value||'Awal'} s/d ${document.getElementById('filterSampai').value||'Sekarang'} | Jumlah D/A: ${data.length} | Total: Rp ${total.toLocaleString('id-ID')}</p><table><tr><th>Tanggal</th><th>Kapal</th><th>Keterangan</th><th>Jumlah</th></tr>${rows}</table><br><p style="text-align:right;font-weight:900">TOTAL YANG HARUS DIBAYAR OWNER: Rp ${total.toLocaleString('id-ID')}</p><br><br><p>Dibuat Oleh, ________________ | Disetujui Owner, ________________</p><script>window.print()<\/script></body></html>`;
+  let w=window.open('','_blank'); w.document.write(html); w.document.close();
+}
+renderDA();
+</script></body></html>
