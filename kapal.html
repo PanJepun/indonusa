@@ -1,15 +1,164 @@
-<!DOCTYPE html><html lang="id"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Kapal - INDONUSA</title><link rel="stylesheet" href="style.css"></head>
-<body><div class="top"><div><b>⚓ INDONUSA MARINE</b></div><button onclick="window.print()">🖨️ PRINT</button></div>
-<div class="wrap"><div class="menu" id="menu"></div><div class="main"><div class="card"><h3>🚢 Input Kapal Baru</h3>
-<label>Nama Kapal *</label><input id="nama" placeholder="MY SEAHORSE">
-<div style="display:flex;gap:10px"><div style="flex:1"><label>Bendera</label><input id="bendera" placeholder="Marshall Islands"></div><div style="flex:1"><label>LOA / GT</label><input id="loa" placeholder="45m / 499 GT"></div></div>
-<div style="display:flex;gap:10px"><div style="flex:1"><label>Pelabuhan</label><select id="pelabuhan"><option>Benoa - Bali</option><option>Lembar - Lombok</option><option>Benete - Sumbawa</option><option>Sorong - Papua</option><option>Lainnya</option></select></div><div style="flex:1"><label>ETA</label><input type="date" id="eta"></div><div style="flex:1"><label>ETD</label><input type="date" id="etd"></div></div>
-<div style="display:flex;gap:10px"><div style="flex:1"><label>Crew</label><input type="number" id="crew" value="10"></div><div style="flex:1"><label>Guest</label><input type="number" id="guest" value="0"></div><div style="flex:1"><label>Agent</label><input id="agent"></div></div>
-<label>Keperluan</label><select id="perlu"><option>Clearance + Provision</option><option>Bunker</option><option>Crew Change</option><option>Repair</option><option>Expedition</option></select>
-<label>Catatan / No HP Kapten</label><textarea id="catat"></textarea>
-<button class="btn" onclick="simpan()">💾 SIMPAN KAPAL</button></div></div></div>
-<script src="db.js"></script><script>menu('kapal.html');
-function simpan(){let n=document.getElementById('nama').value.trim();if(!n){alert('Isi Nama Kapal dulu beb!');return;}
-DB.kapal.unshift({id:Date.now(),nama:n,bendera:document.getElementById('bendera').value,loa:document.getElementById('loa').value,pelabuhan:document.getElementById('pelabuhan').value,eta:document.getElementById('eta').value,etd:document.getElementById('etd').value,crew:document.getElementById('crew').value,guest:document.getElementById('guest').value,agent:document.getElementById('agent').value,perlu:document.getElementById('perlu').value,catat:document.getElementById('catat').value,status:'ARRIVAL'});
-save();alert('BERHASIL BEB! Kapal '+n+' tersimpan beb!');location.href='data.html';}
+<!DOCTYPE html><html lang="id"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Kapal Masuk - INDONUSA</title>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<style>
+*{box-sizing:border-box} body{margin:0;font-family:'Segoe UI',Arial;background:#EEF2F7;color:#222}
+.topbar{background:linear-gradient(90deg,#d4af37 0%,#f7eb81 100%);padding:12px 16px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:100}
+.topbar h1{margin:0;font-size:17px;color:#000;flex:1}
+.btn-back{background:#0A2F52;color:#fff;border:0;padding:10px 16px;border-radius:50px;font-weight:800;cursor:pointer;font-size:13px;white-space:nowrap}
+.wrap{max-width:1400px;margin:0 auto;padding:16px}
+.kapal-wrap{display:flex;gap:16px;align-items:flex-start}
+.kapal-left{flex:1.4;background:#fff;border-radius:12px;padding:18px}
+.kapal-right{flex:1;background:#fff;border-radius:12px;padding:16px;position:sticky;top:70px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+label{font-size:12px;font-weight:800;color:#333;display:block;margin-top:10px}
+input,select,textarea{width:100%;padding:11px;border:1px solid #ddd;border-radius:10px;margin-top:5px;font-size:14px;background:#fff}
+.row-btn{display:flex;gap:8px;align-items:center}
+.row-btn select{flex:1}
+.btn-mini{width:38px;height:42px;border:0;border-radius:10px;font-weight:900;cursor:pointer;font-size:16px;flex-shrink:0;margin-top:5px}
+.btn-plus2{background:#1EA0FF;color:#fff}
+.btn-del{background:#E74C3C;color:#fff}
+.btn-save{background:#0A2F52;color:#fff;border:0;padding:13px;border-radius:10px;font-weight:900;width:100%;margin-top:16px;cursor:pointer;font-size:15px}
+.search{width:100%;padding:11px;border:1px solid #eee;border-radius:10px;background:#F8FAFC}
+.kapal-card{background:#FDF6E3;border:1px solid #F5E6B8;border-radius:12px;padding:12px;margin-top:12px}
+.badge-arrival{background:#D6ECFF;color:#0A2F52;font-size:11px;font-weight:900;padding:4px 10px;border-radius:6px;display:inline-block;margin:6px 0}
+.badge-dep{background:#D9F7D9;color:#1A7A1A;font-size:11px;font-weight:900;padding:4px 10px;border-radius:6px;display:inline-block;margin:6px 0}
+.meta{font-size:12px;color:#444;line-height:1.7}
+.act{display:flex;flex-direction:column;gap:6px}
+.act-row{display:flex;gap:6px}
+.btn-edit{background:#D6ECFF;border:0;padding:8px 10px;border-radius:8px;font-weight:800;cursor:pointer;flex:1}
+.btn-dep2{background:#1EA0FF;color:#fff;border:0;padding:8px 10px;border-radius:8px;font-weight:800;cursor:pointer;flex:1}
+.btn-arr{background:#FFC107;border:0;padding:8px 10px;border-radius:8px;font-weight:800;cursor:pointer;flex:1}
+.btn-hapus{background:#FFE0E0;color:#B00000;border:0;padding:8px 10px;border-radius:8px;font-weight:800;cursor:pointer;flex:1}
+.card-top{display:flex;justify-content:space-between;gap:10px}
+@media(max-width:900px){.kapal-wrap{flex-direction:column}.kapal-right{position:static;width:100%}.grid2{grid-template-columns:1fr}}
+</style></head>
+<body>
+
+<div class="topbar">
+<button class="btn-back" onclick="window.location='index.html'">← 🏠 Dashboard</button>
+<h1>⛴️ Kapal Masuk - INDONUSA MARINE</h1>
+<span id="statusSync" style="font-size:11px;font-weight:800;color:#000">⏳...</span>
+</div>
+
+<div class="wrap">
+<div class="kapal-wrap">
+<div class="kapal-left">
+<h3 style="margin:0">➕ Tambah Kapal Masuk</h3>
+<label>Nama Kapal *</label><input id="nama" placeholder="Contoh: Darma Kencana">
+<div class="grid2">
+<div><label>Bendera / Flag</label><div class="row-btn"><select id="bendera"></select><button class="btn-mini btn-plus2" onclick="tambahMaster('bendera')">+</button><button class="btn-mini btn-del" onclick="hapusMaster('bendera')">🗑️</button></div></div>
+<div><label>Call Sign</label><input id="callSign" placeholder="Contoh: C6..."></div>
+<div><label>Pelabuhan</label><div class="row-btn"><select id="pelabuhan"></select><button class="btn-mini btn-plus2" onclick="tambahMaster('pelabuhan')">+</button><button class="btn-mini btn-del" onclick="hapusMaster('pelabuhan')">🗑️</button></div></div>
+<div><label>Agent</label><div class="row-btn"><select id="agent"></select><button class="btn-mini btn-plus2" onclick="tambahMaster('agent')">+</button><button class="btn-mini btn-del" onclick="hapusMaster('agent')">🗑️</button></div></div>
+<div><label>Jenis Kapal</label><div class="row-btn"><select id="jenis"></select><button class="btn-mini btn-plus2" onclick="tambahMaster('jenis')">+</button><button class="btn-mini btn-del" onclick="hapusMaster('jenis')">🗑️</button></div></div>
+<div><label>GRT / Tonase</label><div class="row-btn"><input id="grt" type="number" value="0"><select id="grtUnit" style="width:90px"><option>GT</option><option>NT</option><option>TON</option></select></div></div>
+<div><label>Tanggal Arrival / ETA</label><input id="eta" type="date"></div>
+<div><label>Tanggal Departure / ETD</label><input id="etd" type="date"></div>
+<div><label>Jumlah Crew</label><input id="crewJml" type="number" value="0"></div>
+<div><label>Jumlah Penumpang</label><input id="pax" type="number" value="0"></div>
+</div>
+<label>Catatan</label><textarea id="catatan" rows="2" placeholder="Catatan tambahan..."></textarea>
+<button class="btn-save" id="btnSave" onclick="simpanKapal()">💾 SAVE KAPAL</button>
+<button class="btn-save" style="background:#eee;color:#333" onclick="resetForm()">↺ Batal / Form Baru</button>
+<p id="debug" style="font-size:12px;color:#666;margin-top:10px"></p>
+</div>
+<div class="kapal-right">
+<h3 style="margin:0">📋 Daftar Kapal Masuk (<span id="jml">0</span>)</h3>
+<input class="search" id="cari" placeholder="🔍 Cari kapal..." oninput="render()">
+<div id="list"></div>
+</div>
+</div>
+</div>
+<script>
+const firebaseConfig = { apiKey: "AIzaSyBI79kjr4WGpmh3OvUxKXcgRao8PMCcxIY", authDomain: "fir-panjepun.firebaseapp.com", projectId: "fir-panjepun", storageBucket: "fir-panjepun.firebasestorage.app", messagingSenderId: "399104502129", appId: "1:399104502129:web:3230853484a64d220c2ed0" };
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+// ⭐ DEFAULT MASTER - biar nggak pernah kosong beb, ini kuncinya!
+let DEFAULT_MASTER = { bendera:['Panama','Indonesia','Singapore','Malaysia','Liberia','Bahamas','Malta'], pelabuhan:['Benoa - Bali','Lembar - Lombok','Gili Trawangan','Nusa Penida','Padang Bai'], agent:['Bali Marine','Indonusa Agency','Samudra Jaya'], jenis:['Speedboat','Yacht','Cruise Ship','Ferry','Tanker','Cargo'] };
+let DB = { kapal:[], clear:{}, clearance:{}, crewChange:{}, provision:{}, finance:{}, insiden:[], videos:[], master: JSON.parse(JSON.stringify(DEFAULT_MASTER)) };
+try{ let l=JSON.parse(localStorage.getItem('INDONUSA_DB')||'{}'); if(l&&typeof l==='object'){ DB=Object.assign(DB,l); } }catch(e){}
+// ⭐ FIX 1: Kalau localStorage master nya kosong, pakai default, jangan biarin kosong!
+if(!DB.master || !DB.master.jenis || !DB.master.jenis.length) DB.master = JSON.parse(JSON.stringify(DEFAULT_MASTER));
+['bendera','pelabuhan','agent','jenis'].forEach(k=>{ if(!DB.master[k] || !DB.master[k].length) DB.master[k]=DEFAULT_MASTER[k].slice(); });
+
+let editId='';
+function simpanDB(){
+  document.getElementById('statusSync').innerText='⏳ Menyimpan ke Firebase...';
+  localStorage.setItem('INDONUSA_DB', JSON.stringify(DB));
+  return db.collection("indonusa").doc("data_utama").set(DB).then(()=>{ document.getElementById('statusSync').innerText='✅ Tersimpan ke Firebase'; }).catch(e=>{ document.getElementById('statusSync').innerText='❌ Gagal: '+e.message; alert('GAGAL SAVE KE FIREBASE BEB!\n'+e.message); });
+}
+// ⭐ FIX 2: onSnapshot JANGAN nimpa master lokal kalau Firebase master nya kosong!
+db.collection("indonusa").doc("data_utama").onSnapshot(function(doc){
+  if(doc.exists){
+    let d=doc.data()||{};
+    // Gabung, jangan timpa mentah-mentah beb!
+    if(d.kapal) DB.kapal=d.kapal;
+    if(d.clear) DB.clear=d.clear; if(d.clearance) DB.clearance=d.clearance;
+    if(d.crewChange) DB.crewChange=d.crewChange; if(d.provision) DB.provision=d.provision;
+    if(d.finance) DB.finance=d.finance; if(d.insiden) DB.insiden=d.insiden; if(d.videos) DB.videos=d.videos;
+    if(d.master && d.master.jenis && d.master.jenis.length) DB.master=d.master;
+    // Kalau Firebase master kosong, upload master lokal ke Firebase biar nggak ilang lagi
+    else { simpanDB(); }
+    localStorage.setItem('INDONUSA_DB', JSON.stringify(DB));
+  }
+  document.getElementById('statusSync').innerText='🟢 Firebase Aktif - '+(DB.kapal||[]).length+' kapal';
+  render();
+});
+function isiMaster(){
+  ['bendera','pelabuhan','agent','jenis'].forEach(k=>{
+    let s=document.getElementById(k); if(!s) return;
+    let cur=s.value; // ⭐ Simpan pilihan sekarang, jangan di-reset!
+    let label={bendera:'Pilih Bendera',pelabuhan:'Pilih Pelabuhan',agent:'Pilih Agent',jenis:'Pilih Jenis Kapal'}[k];
+    s.innerHTML=`<option value="">${label}</option>`+(DB.master[k]||[]).map(x=>`<option value="${x}">${x}</option>`).join('');
+    if(cur && (DB.master[k]||[]).includes(cur)) s.value=cur;
+  });
+}
+function tambahMaster(k){
+  let v=prompt('Tambah '+k+' baru:'); if(!v) return; v=v.trim(); if(!v) return;
+  if(!DB.master[k].includes(v)) DB.master[k].push(v);
+  simpanDB().then(()=>{ isiMaster(); document.getElementById(k).value=v; alert('Master '+k+' tersimpan beb: '+v); });
+}
+function hapusMaster(k){
+  let s=document.getElementById(k); if(!s.value){alert('Pilih dulu yang mau dihapus beb!');return;}
+  if(!confirm('Hapus '+s.value+' dari master '+k+'?')) return;
+  DB.master[k]=DB.master[k].filter(x=>x!==s.value); simpanDB().then(()=>isiMaster());
+}
+function simpanKapal(){
+  let nama=document.getElementById('nama').value.trim();
+  if(!nama){alert('Isi Nama Kapal dulu beb!'); document.getElementById('nama').focus(); return;}
+  let jenis=document.getElementById('jenis').value;
+  // ⭐ FIX 3: Kasih tau kalau Jenis Kapal belum dipilih, jangan diam-diam ke-save kosong!
+  if(!jenis){ if(!confirm('Jenis Kapal belum dipilih beb! Tetap SAVE dengan Jenis Kapal kosong?')){ document.getElementById('jenis').focus(); return; } }
+  let data={ id: editId || ('K'+Date.now()), nama:nama, bendera:document.getElementById('bendera').value, callSign:document.getElementById('callSign').value, pelabuhan:document.getElementById('pelabuhan').value, agent:document.getElementById('agent').value, jenis:jenis, grt:document.getElementById('grt').value, grtUnit:document.getElementById('grtUnit').value, eta:document.getElementById('eta').value, etd:document.getElementById('etd').value, crew:document.getElementById('crewJml').value, pax:document.getElementById('pax').value, catatan:document.getElementById('catatan').value, status: editId ? ((DB.kapal||[]).find(k=>k.id===editId)?.status||'ARRIVAL') : 'ARRIVAL' };
+  let idx=(DB.kapal||[]).findIndex(k=>k.id===editId || k.nama.toLowerCase()===nama.toLowerCase());
+  if(idx>=0) DB.kapal[idx]=data; else DB.kapal.unshift(data);
+  document.getElementById('debug').innerText='Menyimpan: '+nama+' | Jenis: '+(jenis||'(kosong)')+' | Bendera: '+data.bendera;
+  simpanDB().then(()=>{ render(); resetForm(); alert('BERHASIL BEB! ✅\n'+nama+' tersimpan ke Firebase beb!\nJenis: '+(jenis||'-')+'\nBendera: '+data.bendera); });
+}
+function resetForm(){ editId=''; ['nama','callSign','grt','eta','etd','crewJml','pax','catatan'].forEach(id=>document.getElementById(id).value=''); document.getElementById('crewJml').value=0; document.getElementById('pax').value=0; document.getElementById('grt').value=0; ['bendera','pelabuhan','agent','jenis'].forEach(id=>document.getElementById(id).value=''); document.getElementById('btnSave').innerText='💾 SAVE KAPAL'; document.getElementById('nama').focus(); }
+function editKapal(id){
+  let k=(DB.kapal||[]).find(x=>x.id===id || x.nama===id); if(!k) return; editId=k.id||'';
+  isiMaster();
+  document.getElementById('nama').value=k.nama; document.getElementById('bendera').value=k.bendera||''; document.getElementById('callSign').value=k.callSign||''; document.getElementById('pelabuhan').value=k.pelabuhan||''; document.getElementById('agent').value=k.agent||''; document.getElementById('jenis').value=k.jenis||''; document.getElementById('grt').value=k.grt||0; document.getElementById('grtUnit').value=k.grtUnit||'GT'; document.getElementById('eta').value=k.eta||''; document.getElementById('etd').value=k.etd||''; document.getElementById('crewJml').value=k.crew||0; document.getElementById('pax').value=k.pax||0; document.getElementById('catatan').value=k.catatan||''; document.getElementById('btnSave').innerText='💾 UPDATE KAPAL'; window.scrollTo({top:0,behavior:'smooth'});
+}
+function toggleStatus(id){
+  let k=(DB.kapal||[]).find(x=>x.id===id || x.nama===id); if(!k) return;
+  k.status = k.status==='ARRIVAL' ? 'DEPARTURE' : 'ARRIVAL'; simpanDB().then(()=>render());
+}
+function hapusKapal(id){ let k=(DB.kapal||[]).find(x=>x.id===id || x.nama===id); if(!k) return; if(!confirm('Hapus kapal '+k.nama+' beb?'))return; DB.kapal=DB.kapal.filter(x=>x.id!==k.id && x.nama!==k.nama); delete DB.crewChange[k.nama]; delete DB.clear[k.nama]; delete DB.clearance[k.nama]; delete DB.provision[k.nama]; delete DB.finance[k.nama]; if(Array.isArray(DB.insiden)) DB.insiden=DB.insiden.filter(x=>x.kapal!==k.nama); simpanDB().then(()=>render()); }
+function render(){
+  isiMaster();
+  let q=(document.getElementById('cari').value||'').toLowerCase();
+  let list=(DB.kapal||[]).filter(k=>JSON.stringify(k).toLowerCase().includes(q));
+  document.getElementById('jml').innerText=list.length;
+  if(!list.length){document.getElementById('list').innerHTML='<p style="font-size:13px;color:#888;margin-top:12px">Belum ada kapal beb!</p>';return;}
+  document.getElementById('list').innerHTML=list.map(k=>{
+    let isArr=k.status!=='DEPARTURE';
+    let tgl=k.etd||k.eta||'';
+    let key=k.id||k.nama;
+    return `<div class="kapal-card"><div class="card-top"><div><b>${k.nama}</b><br><span class="${isArr?'badge-arrival':'badge-dep'}">${isArr?'ARRIVAL':'DEPARTURE'}</span><div class="meta">🚩 ${k.bendera||'-'} | ${k.callSign||'-'} | ${k.pelabuhan||'-'}<br>🚢 ${k.jenis||'-'} | ${k.grt||0} ${k.grtUnit||'GT'} | ${k.agent||'-'}<br>👤 Crew: ${k.crew||0} | Pax: ${k.pax||0} | 📅 ${tgl}</div></div><div class="act"><div class="act-row"><button class="btn-edit" onclick="editKapal('${key}')">✏️ Edit</button></div><div class="act-row"><button class="${isArr?'btn-dep2':'btn-arr'}" onclick="toggleStatus('${key}')">🛫 ${isArr?'Departure':'Arrival'}</button></div><div class="act-row"><button class="btn-hapus" onclick="hapusKapal('${key}')">🗑️ Hapus</button></div></div></div></div>`;
+  }).join('');
+}
+isiMaster(); render();
 </script></body></html>

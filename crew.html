@@ -1,203 +1,160 @@
-<!DOCTYPE html><html lang="id"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Crew Change - INDONUSA</title><link rel="stylesheet" href="style.css">
+<!DOCTYPE html><html lang="id"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Crew Change - INDONUSA</title>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <style>
-.card-top{position:sticky;top:60px;z-index:100;background:#fff;padding:10px 14px !important}
-.card-top-head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:8px}
-.card-top-head h3{margin:0;font-size:16px}
-.btn-save-atas{background:#F5B301;color:#000;border:0;padding:8px 14px;border-radius:8px;font-weight:900;font-size:13px;cursor:pointer;white-space:nowrap;flex-shrink:0}
-.top-inputs{display:flex;gap:8px}
-.top-inputs>div{flex:1}
-.top-inputs label{display:block;font-size:11px;font-weight:700;margin-bottom:3px;color:#0A2F52}
-.top-inputs input,.top-inputs select{width:100%;padding:8px 10px !important;font-size:13px !important;border-radius:8px !important;margin:0 !important;box-sizing:border-box}
-.card-bawah{max-height:78vh;overflow-y:auto;padding-right:4px}
-.card-bawah::-webkit-scrollbar{width:8px}
-.card-bawah::-webkit-scrollbar-thumb{background:#0A2F52;border-radius:10px}
-.crew-box{background:#F6F8FB;border:1px solid #ddd;border-radius:12px;padding:12px;margin:10px 0}
-.crew-row{display:flex;gap:8px;margin-bottom:8px;align-items:flex-start}
-.crew-row input,.crew-row select{flex:1;min-width:0}
-.crew-row .btn-plus{flex:0 0 36px;height:42px;background:#8ED68E;color:#0A2F52;border:0;border-radius:8px;font-weight:900;cursor:pointer;font-size:18px}
-.crew-row .btn-minus{flex:0 0 36px;height:42px;background:#FFE0E0;color:#B00000;border:0;border-radius:8px;font-weight:900;cursor:pointer;font-size:18px}
-.btn-tambah{width:100%;padding:11px;border:2px dashed #0A2F52;border-radius:10px;background:#fff;color:#0A2F52;font-weight:900;cursor:pointer;margin-top:4px}
-.jumlah{font-size:12px;font-weight:800;color:#0A2F52;background:#FFF3CD;padding:4px 8px;border-radius:20px;display:inline-block;margin-bottom:8px}
-.tabel-data{width:100%;border-collapse:collapse;font-size:13px;margin-top:8px}
-.tabel-data th,.tabel-data td{border:1px solid #ddd;padding:8px;text-align:left}
-.tabel-data th{background:#0A2F52;color:#fff}
-.btn-edit-kecil{background:#FFF3CD;color:#000;border:1px solid #F5B301;padding:5px 8px;border-radius:6px;font-weight:800;cursor:pointer;font-size:12px;white-space:nowrap}
-.btn-hapus-kecil{background:#FFE0E0;color:#B00000;border:0;padding:5px 8px;border-radius:6px;font-weight:800;cursor:pointer;font-size:12px;white-space:nowrap}
-@media(max-width:700px){ .card-top{top:52px} .top-inputs{flex-direction:column} .card-bawah{max-height:none} .crew-row{flex-wrap:wrap} .crew-row input,.crew-row select{flex:1 1 45%} }
-</style>
-</head>
-<body><div class="top"><div><b>⚓ INDONUSA MARINE</b></div></div>
-<div class="wrap"><div class="menu" id="menu"></div><div class="main">
+*{box-sizing:border-box} body{margin:0;font-family:'Segoe UI',Arial;background:#EEF2F7;color:#222}
+/* TOPBAR - DIKUNCI JUGA BEB */
+.topbar{background:linear-gradient(90deg,#d4af37 0%,#f7eb81 100%);padding:10px 14px;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:200}
+.topbar h1{margin:0;font-size:16px;color:#000;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.btn-back{background:#0A2F52;color:#fff;border:0;padding:9px 14px;border-radius:50px;font-weight:800;cursor:pointer;font-size:13px;white-space:nowrap}
+.wrap{max-width:1100px;margin:0 auto;padding:12px}
 
-<div class="card card-top">
-  <div class="card-top-head">
-    <h3>👨‍✈️ Crew Change</h3>
-    <button class="btn-save-atas" onclick="simpanCrew()">💾 SAVE DATA</button>
-  </div>
-  <div class="top-inputs">
-    <div><label>Nama Kapal</label><input id="crewKapalNama" placeholder="MY SEAHORSE"></div>
-    <div><label>Pilih Kapal</label><select id="pilihCrew"></select></div>
-    <div><label>Tanggal / Flight</label><input id="crewTgl" placeholder="28 Nov, GA 123 DPS - SIN"></div>
-  </div>
+/* ⭐ CARD 1 - ATAS - KECIL + DIKUNCI, NGGAK IKUT SCROLL BEB ⭐ */
+.card-atas{background:#fff;border-radius:12px;padding:12px 14px;position:sticky;top:52px;z-index:100;box-shadow:0 4px 14px rgba(0,0,0,.12);border:1px solid #E6C87A}
+.card-atas h3{margin:0 0 8px;font-size:15px}
+.form-atas{display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:8px;align-items:end}
+.form-atas label{font-size:11px;font-weight:800;color:#555;display:block;margin-bottom:3px}
+.form-atas input,.form-atas select{width:100%;padding:9px 10px;border:1px solid #ddd;border-radius:9px;font-size:13px;background:#fff}
+.btn-save{background:#0A2F52;color:#fff;border:0;padding:10px 16px;border-radius:9px;font-weight:900;cursor:pointer;font-size:13px;white-space:nowrap;height:39px}
+.btn-save:hover{background:#000}
+
+/* ⭐ CARD 2 - BAWAH - INI YANG BISA DI-SCROLL BEB ⭐ */
+.card-bawah{background:#fff;border-radius:12px;padding:16px;margin-top:12px}
+.card-bawah h3{margin:14px 0 8px;font-size:15px}
+.card-bawah h3:first-child{margin-top:0}
+.btn-tambah-on{background:#F5B301;color:#000;border:0;padding:11px;border-radius:10px;font-weight:900;width:100%;margin-top:8px;cursor:pointer}
+.btn-tambah-off{background:#FF6B6B;color:#fff;border:0;padding:11px;border-radius:10px;font-weight:900;width:100%;margin-top:8px;cursor:pointer}
+.row{display:grid;grid-template-columns:1fr 1fr 1fr 1fr 38px 38px;gap:8px;margin-top:8px}
+.row input,.row select{width:100%;padding:10px;border:1px solid #ddd;border-radius:10px;font-size:13px;margin:0}
+.btn-mini{border:0;border-radius:10px;font-weight:900;cursor:pointer;font-size:18px}
+.btn-plus{background:#1EA0FF;color:#fff}
+.btn-min{background:#FFE0E0;color:#B00000}
+.item{display:flex;justify-content:space-between;gap:10px;padding:10px 0;border-bottom:1px solid #eee;font-size:13px}
+.item:last-child{border-bottom:0}
+.badge-on{background:#D9F7D9;color:#1A7A1A;font-size:11px;font-weight:900;padding:4px 8px;border-radius:6px}
+.badge-off{background:#FFE0E0;color:#B00000;font-size:11px;font-weight:900;padding:4px 8px;border-radius:6px}
+input,select{font-family:inherit}
+label{font-size:12px;font-weight:700;color:#333;display:block;margin-top:10px}
+input[type=text],select{width:100%;padding:10px;border:1px solid #ddd;border-radius:10px;margin-top:5px}
+@media(max-width:800px){
+  .form-atas{grid-template-columns:1fr 1fr}
+  .btn-save{grid-column:span 2;width:100%}
+  .row{grid-template-columns:1fr 1fr}
+  .topbar h1{font-size:14px}
+  .card-atas{top:50px}
+}
+</style></head>
+<body>
+
+<div class="topbar">
+<button class="btn-back" onclick="window.location='index.html'">← 🏠 Dashboard</button>
+<h1>👨‍✈️ Crew Change - INDONUSA MARINE</h1>
+<span id="statusSync" style="font-size:11px;font-weight:800;color:#000">⏳...</span>
 </div>
 
-<div class="card card-bawah">
-  <div class="crew-box" style="border-color:#8ED68E;background:#F0FDF0">
-    <b>🟢 DATA SIAPA YANG NAIK (Crew ON) - <span id="jmlOn" class="jumlah">0 orang beb</span></b>
-    <div id="listOn"></div>
-    <button class="btn-tambah" onclick="tambahRow('on')">➕ + TAMBAH CREW YANG NAIK BEB</button>
-  </div>
-  <div class="crew-box" style="border-color:#FFB3B3;background:#FFF5F5">
-    <b>🔴 DATA SIAPA YANG TURUN (Crew OFF) - <span id="jmlOff" class="jumlah">0 orang beb</span></b>
-    <div id="listOff"></div>
-    <button class="btn-tambah" onclick="tambahRow('off')">➕ + TAMBAH CREW YANG TURUN BEB</button>
-  </div>
-  <button class="btn" onclick="printCrewPDF()">📄 SAVE JADI PDF</button>
-  <h3 style="margin-top:16px">📋 DATA CREW YANG UDAH KESIMPEN BEB - Bisa Edit / Hapus Per Nama Beb!</h3>
-  <p style="font-size:12px;color:#666;margin:0">Klik ✏️ EDIT beb buat ganti nama 1 orang beb, klik 🗑️ HAPUS beb buat hapus 1 orang itu aja beb, yang lain tetep aman beb!</p>
-  <div id="listCrew" style="margin-top:8px"></div>
+<div class="wrap">
+
+<!-- ⭐ CARD 1 - ATAS - KECIL + DIKUNCI ⭐ -->
+<div class="card-atas">
+<h3>👨‍✈️ Crew Change - <span id="judulKapal">Pilih Kapal</span></h3>
+<div class="form-atas">
+<div><label>Nama Kapal</label><input id="namaKapal" placeholder="Symphony of the seas" oninput="document.getElementById('pilihKapal').value='';updateJudul()"></div>
+<div><label>Pilih Kapal</label><select id="pilihKapal" onchange="onPilihKapal()"><option value="">-- Pilih Kapal --</option></select></div>
+<div><label>Tanggal / Flight</label><input id="flight" placeholder="28 Nov, GA 123 DPS - SIN"></div>
+<button class="btn-save" onclick="simpanCrew()">💾 SAVE DATA</button>
+</div>
+<p id="debug" style="font-size:11px;color:#666;margin:6px 0 0"></p>
 </div>
 
-</div></div>
-<script src="db.js"></script><script>menu('crew.html'); kapalOptions('pilihCrew');
+<!-- ⭐ CARD 2 - BAWAH - SCROLL BEBAS ⭐ -->
+<div class="card-bawah">
+<h3>🟢 CREW ON (<span id="jmlOn">0</span>)</h3>
+<div id="onForm"></div>
+<button class="btn-tambah-on" onclick="tambahBaris('on')">➕ + TAMBAH ON</button>
+
+<h3>🔴 CREW OFF (<span id="jmlOff">0</span>)</h3>
+<div id="offForm"></div>
+<button class="btn-tambah-off" onclick="tambahBaris('off')">➕ + TAMBAH OFF</button>
+
+<h3>📋 Daftar Crew Tersimpan - <span id="kapalAktif">Semua Kapal</span></h3>
+<label>Filter Kapal</label>
+<select id="filterKapal" onchange="renderList()"><option value="">-- 🌐 Semua Kapal --</option></select>
+<input placeholder="🔍 Cari crew..." id="cari" oninput="renderList()" style="margin-top:8px">
+<div id="list"></div>
+</div>
+
+</div>
+
+<script>
+const firebaseConfig = { apiKey: "AIzaSyBI79kjr4WGpmh3OvUxKXcgRao8PMCcxIY", authDomain: "fir-panjepun.firebaseapp.com", projectId: "fir-panjepun", storageBucket: "fir-panjepun.firebasestorage.app", messagingSenderId: "399104502129", appId: "1:399104502129:web:3230853484a64d220c2ed0" };
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+let DB = { kapal:[], clear:{}, clearance:{}, crewChange:{}, provision:{}, finance:{}, insiden:[], videos:[], master:{} };
+try{ let l=JSON.parse(localStorage.getItem('INDONUSA_DB')||'{}'); if(l&&typeof l==='object') DB=Object.assign(DB,l); }catch(e){}
 if(!DB.crewChange) DB.crewChange={};
-let negaraList=['Indonesia','Philippines','Malaysia','Singapore','Thailand','Vietnam','Myanmar','India','China','Japan','South Korea','USA','United Kingdom','Australia','New Zealand','Germany','France','Netherlands','Italy','Spain','Portugal','Greece','Croatia','Ukraine','Russia','Poland','Turkey','South Africa','Brazil','Chile','Mexico','Canada','Egypt','Sri Lanka','Bangladesh','Pakistan','Nepal','Mongolia','Fiji','Kiribati','Samoa','Tonga','Vanuatu','Papua New Guinea'];
-let negaraOptions=negaraList.map(n=>`<option value="${n}">${n}</option>`).join('');
-function buatRow(tipe, data){
-  data=data||{nama:'',passport:'',jabatan:'',kebangsaan:'Indonesia'};
-  let div=document.createElement('div');
-  div.className='crew-row';
-  div.innerHTML=`
-    <input class="c-${tipe}-nama" placeholder="Nama Crew beb *" value="${data.nama||''}">
-    <input class="c-${tipe}-pass" placeholder="Passport No beb *" value="${data.passport||''}">
-    <input class="c-${tipe}-jab" placeholder="Jabatan" value="${data.jabatan||''}">
-    <select class="c-${tipe}-bangsa"><option value="">-- Kebangsaan beb --</option>${negaraOptions}</select>
-    <button class="btn-plus" onclick="tambahRow('${tipe}',null,this)" title="Tambah 1 crew lagi beb">+</button>
-    <button class="btn-minus" onclick="hapusRow(this)" title="Kurangi / Hapus crew ini beb">-</button>`;
-  let sel=div.querySelector('.c-'+tipe+'-bangsa');
-  if(data.kebangsaan) sel.value=data.kebangsaan;
-  if(data.kebangsaan && !negaraList.includes(data.kebangsaan)){
-    let o=document.createElement('option'); o.value=data.kebangsaan; o.text=data.kebangsaan+' (lama beb)'; sel.appendChild(o); sel.value=data.kebangsaan;
-  }
-  return div;
+let onRows=[{nama:'',passport:'',jabatan:'',negara:'Indonesia'}];
+let offRows=[{nama:'',passport:'',jabatan:'',negara:'Indonesia'}];
+function updateJudul(){ document.getElementById('judulKapal').innerText=document.getElementById('namaKapal').value||'Pilih Kapal'; }
+function simpanDB(){
+  document.getElementById('statusSync').innerText='⏳ Menyimpan...';
+  localStorage.setItem('INDONUSA_DB', JSON.stringify(DB));
+  return db.collection("indonusa").doc("data_utama").set(DB).then(()=>{ document.getElementById('statusSync').innerText='✅ Tersimpan ke Firebase'; }).catch(e=>{ document.getElementById('statusSync').innerText='❌ Gagal: '+e.message; alert('GAGAL SAVE BEB!\n'+e.message); });
 }
-function tambahRow(tipe, data, btn){
-  let list=document.getElementById(tipe==='on'?'listOn':'listOff');
-  let rowBaru=buatRow(tipe, data);
-  if(btn){ btn.parentElement.after(rowBaru); } else { list.appendChild(rowBaru); }
-  updateJumlah();
+db.collection("indonusa").doc("data_utama").onSnapshot(function(doc){
+  if(doc.exists){ let d=doc.data()||{}; DB=Object.assign(DB,d); if(!DB.crewChange) DB.crewChange={}; localStorage.setItem('INDONUSA_DB', JSON.stringify(DB)); }
+  document.getElementById('statusSync').innerText='🟢 Firebase Aktif - '+(DB.kapal||[]).length+' kapal';
+  isiKapal(); renderList();
+});
+function isiKapal(){
+  let s=document.getElementById('pilihKapal'); let f=document.getElementById('filterKapal');
+  let v=s.value, fv=f.value;
+  s.innerHTML='<option value="">-- Pilih Kapal --</option>'+(DB.kapal||[]).map(k=>`<option value="${k.nama}">${k.nama}</option>`).join('');
+  f.innerHTML='<option value="">-- 🌐 Semua Kapal --</option>'+(DB.kapal||[]).map(k=>`<option value="${k.nama}">${k.nama}</option>`).join('');
+  if(v) s.value=v; if(fv) f.value=fv;
 }
-function hapusRow(btn){
-  let list=btn.parentElement.parentElement;
-  if(list.querySelectorAll('.crew-row').length<=1){ alert('Minimal 1 baris beb! Kosongin aja beb namanya beb!'); return; }
-  if(confirm('Hapus baris ini beb?')){ btn.parentElement.remove(); updateJumlah(); }
+function onPilihKapal(){ let v=document.getElementById('pilihKapal').value; if(v){ document.getElementById('namaKapal').value=v; updateJudul(); } }
+function renderForm(){
+  let buat=(arr,tipe)=>arr.map((r,i)=>`<div class="row"><input placeholder="Nama *" value="${r.nama}" oninput="updateRow('${tipe}',${i},'nama',this.value)"><input placeholder="Passport *" value="${r.passport}" oninput="updateRow('${tipe}',${i},'passport',this.value)"><input placeholder="Jabatan" value="${r.jabatan}" oninput="updateRow('${tipe}',${i},'jabatan',this.value)"><select onchange="updateRow('${tipe}',${i},'negara',this.value)"><option ${r.negara==='Indonesia'?'selected':''}>Indonesia</option><option ${r.negara==='Philippines'?'selected':''}>Philippines</option><option ${r.negara==='India'?'selected':''}>India</option><option ${r.negara==='Myanmar'?'selected':''}>Myanmar</option><option ${r.negara==='Lainnya'?'selected':''}>Lainnya</option></select><button class="btn-mini btn-plus" onclick="tambahBaris('${tipe}')">+</button><button class="btn-mini btn-min" onclick="hapusBaris('${tipe}',${i})">-</button></div>`).join('');
+  document.getElementById('onForm').innerHTML=buat(onRows,'on');
+  document.getElementById('offForm').innerHTML=buat(offRows,'off');
+  document.getElementById('jmlOn').innerText=onRows.filter(r=>r.nama).length;
+  document.getElementById('jmlOff').innerText=offRows.filter(r=>r.nama).length;
 }
-function updateJumlah(){
-  document.getElementById('jmlOn').innerText=document.querySelectorAll('#listOn .crew-row').length+' orang beb';
-  document.getElementById('jmlOff').innerText=document.querySelectorAll('#listOff .crew-row').length+' orang beb';
-}
-tambahRow('on'); tambahRow('off');
-document.getElementById('crewKapalNama').addEventListener('input', loadCrew);
-document.getElementById('pilihCrew').addEventListener('change', function(){let k=DB.kapal.find(x=>x.id==this.value); if(k) document.getElementById('crewKapalNama').value=k.nama; loadCrew();});
-function loadCrew(){
-  let nama=getNamaKapal('crewKapalNama','pilihCrew');
-  let data=nama?DB.crewChange[nama]:null;
-  document.getElementById('listOn').innerHTML=''; document.getElementById('listOff').innerHTML='';
-  if(data){
-    document.getElementById('crewTgl').value=data.tgl||'';
-    (data.on||[]).forEach(c=>tambahRow('on',c));
-    (data.off||[]).forEach(c=>tambahRow('off',c));
-  }
-  if(!document.querySelectorAll('#listOn .crew-row').length) tambahRow('on');
-  if(!document.querySelectorAll('#listOff .crew-row').length) tambahRow('off');
-  updateJumlah();
-}
-function kumpul(tipe){
-  let rows=document.querySelectorAll('#list'+(tipe==='on'?'On':'Off')+' .crew-row');
-  let hasil=[];
-  rows.forEach(r=>{
-    let nama=r.querySelector('.c-'+tipe+'-nama').value.trim();
-    let pass=r.querySelector('.c-'+tipe+'-pass').value.trim();
-    let jab=r.querySelector('.c-'+tipe+'-jab').value.trim();
-    let bangsa=r.querySelector('.c-'+tipe+'-bangsa').value;
-    if(nama||pass) hasil.push({nama:nama,passport:pass,jabatan:jab,kebangsaan:bangsa});
-  });
-  return hasil;
-}
+function updateRow(tipe,i,k,v){ if(tipe==='on') onRows[i][k]=v; else offRows[i][k]=v; }
+function tambahBaris(tipe){ if(tipe==='on') onRows.push({nama:'',passport:'',jabatan:'',negara:'Indonesia'}); else offRows.push({nama:'',passport:'',jabatan:'',negara:'Indonesia'}); renderForm(); }
+function hapusBaris(tipe,i){ if(tipe==='on'){ if(onRows.length>1) onRows.splice(i,1); } else { if(offRows.length>1) offRows.splice(i,1); } renderForm(); }
 function simpanCrew(){
-  let nama=getNamaKapal('crewKapalNama','pilihCrew');
-  if(!nama){ alert('Isi Nama Kapal dulu beb!'); return; }
-  let on=kumpul('on'); let off=kumpul('off');
-  if(!on.length && !off.length){ alert('Isi dulu beb minimal 1 crew ON atau OFF beb!'); return; }
-  let kurang=[];
-  on.forEach((c,i)=>{ if(!c.nama||!c.passport) kurang.push('Crew NAIK ke-'+(i+1)+' beb, Nama / Passport belum diisi beb!'); });
-  off.forEach((c,i)=>{ if(!c.nama||!c.passport) kurang.push('Crew TURUN ke-'+(i+1)+' beb, Nama / Passport belum diisi beb!'); });
-  if(kurang.length){ alert('Belum lengkap beb!\n'+kurang.join('\n')); return; }
-  DB.crewChange[nama]={on:on,off:off,tgl:document.getElementById('crewTgl').value,tglSimpan:new Date().toLocaleString('id-ID')};
-  save(); renderCrew();
-  alert('BERHASIL BEB! ✅\nKapal: '+nama);
+  let kapal=document.getElementById('namaKapal').value.trim();
+  if(!kapal){ alert('Isi Nama Kapal dulu beb!'); return; }
+  let flight=document.getElementById('flight').value;
+  if(!DB.crewChange[kapal]) DB.crewChange[kapal]={on:[],off:[],flight:''};
+  DB.crewChange[kapal].flight=flight;
+  let onBaru=onRows.filter(r=>r.nama.trim()).map(r=>({id:'C'+Date.now()+Math.random().toString().slice(2,6), nama:r.nama, passport:r.passport, jabatan:r.jabatan, negara:r.negara, kebangsaan:r.negara, status:'ON', tgl:new Date().toISOString().slice(0,10), flight:flight, kapal:kapal}));
+  let offBaru=offRows.filter(r=>r.nama.trim()).map(r=>({id:'C'+Date.now()+Math.random().toString().slice(2,6), nama:r.nama, passport:r.passport, jabatan:r.jabatan, negara:r.negara, kebangsaan:r.negara, status:'OFF', tgl:new Date().toISOString().slice(0,10), flight:flight, kapal:kapal}));
+  if(!onBaru.length && !offBaru.length){ alert('Isi minimal 1 crew ON / OFF dulu beb!'); return; }
+  DB.crewChange[kapal].on.push(...onBaru);
+  DB.crewChange[kapal].off.push(...offBaru);
+  document.getElementById('debug').innerText='Menyimpan: '+kapal+' | ON: '+onBaru.length+' | OFF: '+offBaru.length;
+  simpanDB().then(()=>{ onRows=[{nama:'',passport:'',jabatan:'',negara:'Indonesia'}]; offRows=[{nama:'',passport:'',jabatan:'',negara:'Indonesia'}]; renderForm(); renderList(); alert('BERHASIL BEB! ✅\nCrew '+kapal+' tersimpan ke Firebase!\nON: '+onBaru.length+' | OFF: '+offBaru.length); });
 }
-
-// ⭐ EDIT 1 NAMA AJA BEB! ⭐
-function editSatu(namaKapal, tipe, idx){
-  let d=DB.crewChange[namaKapal];
-  if(!d) return;
-  let list=tipe==='on'?d.on:d.off;
-  let c=list[idx];
-  if(!c) return;
-  let namaBaru=prompt('Edit Nama beb:', c.nama);
-  if(namaBaru===null) return;
-  let passBaru=prompt('Edit Passport beb:', c.passport);
-  if(passBaru===null) return;
-  let jabBaru=prompt('Edit Jabatan beb:', c.jabatan||'');
-  if(jabBaru===null) return;
-  let bangsaBaru=prompt('Edit Kebangsaan beb (pilih: Indonesia, Philippines, USA, dll):', c.kebangsaan||'');
-  if(bangsaBaru===null) return;
-  list[idx]={nama:namaBaru.trim(),passport:passBaru.trim(),jabatan:jabBaru.trim(),kebangsaan:bangsaBaru.trim()};
-  d.tglSimpan=new Date().toLocaleString('id-ID');
-  save(); renderCrew();
-  // Biar form atas juga ke-update beb!
-  if(getNamaKapal('crewKapalNama','pilihCrew')===namaKapal) loadCrew();
-  alert('BERHASIL DI EDIT BEB! ✅\nJadi: '+namaBaru+' - '+passBaru);
+function hapusCrew(kapal,id,tipe){ if(!confirm('Hapus crew ini beb?'))return; if(DB.crewChange[kapal]) DB.crewChange[kapal][tipe]=DB.crewChange[kapal][tipe].filter(x=>x.id!==id); simpanDB().then(()=>renderList()); }
+function renderList(){
+  isiKapal();
+  let q=(document.getElementById('cari').value||'').toLowerCase();
+  let f=document.getElementById('filterKapal').value;
+  document.getElementById('kapalAktif').innerText=f||'Semua Kapal';
+  let html=''; let total=0;
+  Object.keys(DB.crewChange||{}).forEach(kapal=>{
+    if(f && kapal!==f) return;
+    ['on','off'].forEach(t=>{
+      (DB.crewChange[kapal][t]||[]).forEach(c=>{
+        if(q && !JSON.stringify(c).toLowerCase().includes(q)) return;
+        total++; let isOn=t==='on';
+        html+=`<div class="item"><div><b>${c.nama}</b> <span class="${isOn?'badge-on':'badge-off'}">${isOn?'🟢 ON':'🔴 OFF'}</span><br><small style="color:#666">🚢 ${kapal} | ${c.jabatan||'-'} | 🛂 ${c.passport||'-'} | ${c.negara||c.kebangsaan||'-'} | ✈️ ${c.flight||DB.crewChange[kapal].flight||'-'}</small></div><button class="btn-mini btn-min" style="padding:6px 12px;font-size:12px" onclick="hapusCrew('${kapal}','${c.id}','${t}')">🗑️ Hapus</button></div>`;
+      });
+    });
+  });
+  document.getElementById('list').innerHTML=html||'<p style="font-size:13px;color:#888">Belum ada crew tersimpan beb!</p>';
 }
-// ⭐ HAPUS 1 NAMA AJA BEB, YANG LAIN AMAN BEB! ⭐
-function hapusSatu(namaKapal, tipe, idx){
-  let d=DB.crewChange[namaKapal];
-  if(!d) return;
-  let list=tipe==='on'?d.on:d.off;
-  let c=list[idx];
-  if(!confirm('Hapus 1 nama ini aja beb?\n\n'+c.nama+' - '+c.passport+'\n('+(tipe==='on'?'NAIK beb':'TURUN beb')+')\n\nYang lain tetep aman beb, cuma '+c.nama+' aja yang kehapus beb!')) return;
-  list.splice(idx,1);
-  // Kalo udah kosong semua beb, baru hapus kapalnya beb!
-  if(!d.on.length && !d.off.length){ delete DB.crewChange[namaKapal]; }
-  else { d.tglSimpan=new Date().toLocaleString('id-ID'); }
-  save(); renderCrew();
-  if(getNamaKapal('crewKapalNama','pilihCrew')===namaKapal) loadCrew();
-  alert('UDAH KEHAPUS BEB! 🗑️\n'+c.nama+' udah kehapus beb, yang lain masih ada beb!');
-}
-function renderCrew(){
-  let keys=Object.keys(DB.crewChange||{});
-  if(!keys.length){ document.getElementById('listCrew').innerHTML='Belum ada data beb!'; return; }
-  document.getElementById('listCrew').innerHTML=keys.map(n=>{
-    let d=DB.crewChange[n];
-    // ⭐ TIAP BARIS ADA EDIT + HAPUS SENDIRI BEB! ⭐
-    let tabelOn=(d.on||[]).map((c,i)=>`<tr><td>${i+1}</td><td><b>${c.nama}</b></td><td>${c.passport}</td><td>${c.jabatan||'-'}</td><td>${c.kebangsaan||'-'}</td><td>🟢 NAIK</td><td><button class="btn-edit-kecil" onclick="editSatu('${n}','on',${i})">✏️ EDIT</button> <button class="btn-hapus-kecil" onclick="hapusSatu('${n}','on',${i})">🗑️ HAPUS</button></td></tr>`).join('')||'<tr><td colspan=7>Tidak ada beb</td></tr>';
-    let tabelOff=(d.off||[]).map((c,i)=>`<tr><td>${i+1}</td><td><b>${c.nama}</b></td><td>${c.passport}</td><td>${c.jabatan||'-'}</td><td>${c.kebangsaan||'-'}</td><td>🔴 TURUN</td><td><button class="btn-edit-kecil" onclick="editSatu('${n}','off',${i})">✏️ EDIT</button> <button class="btn-hapus-kecil" onclick="hapusSatu('${n}','off',${i})">🗑️ HAPUS</button></td></tr>`).join('')||'<tr><td colspan=7>Tidak ada beb</td></tr>';
-    return `<div style="padding:12px;border:1px solid #ddd;border-radius:10px;margin-bottom:12px;background:#fff"><b>⚓ ${n}</b> - ${d.tgl||''} - Disimpan: ${d.tglSimpan||''}<br>
-    <b style="color:#0A6B0A">🟢 SIAPA YANG NAIK (${d.on.length} orang beb):</b>
-    <table class="tabel-data"><tr><th>No</th><th>Nama</th><th>Passport</th><th>Jabatan</th><th>Kebangsaan</th><th>Status</th><th>Aksi Per Nama Beb</th></tr>${tabelOn}</table>
-    <br><b style="color:#B00000">🔴 SIAPA YANG TURUN (${d.off.length} orang beb):</b>
-    <table class="tabel-data"><tr><th>No</th><th>Nama</th><th>Passport</th><th>Jabatan</th><th>Kebangsaan</th><th>Status</th><th>Aksi Per Nama Beb</th></tr>${tabelOff}</table></div>`;
-  }).join('');
-}
-function printCrewPDF(){
-  let nama=getNamaKapal('crewKapalNama','pilihCrew'); if(!nama){alert('Isi Nama Kapal dulu beb!');return;}
-  let data=DB.crewChange[nama]; if(!data){alert('Belum ada crew change '+nama+' beb! Save dulu beb!');return;}
-  let k=DB.kapal.find(x=>x.nama.toLowerCase()===nama.toLowerCase())||{};
-  let rowsOn=data.on.map((c,i)=>`<tr><td>${i+1}</td><td>${c.nama}</td><td>${c.passport}</td><td>${c.jabatan||'-'}</td><td>${c.kebangsaan||'-'}</td><td>ON 🟢</td></tr>`).join('');
-  let rowsOff=data.off.map((c,i)=>`<tr><td>${i+1}</td><td>${c.nama}</td><td>${c.passport}</td><td>${c.jabatan||'-'}</td><td>${c.kebangsaan||'-'}</td><td>OFF 🔴</td></tr>`).join('');
-  let html=`<html><head><title>Crew Change - ${nama}</title><style>body{font-family:Arial;padding:20px;color:#000}table{width:100%;border-collapse:collapse;font-size:12px}th,td{border:1px solid #000;padding:8px}th{background:#0A2F52;color:#fff}h3{color:#0A2F52}</style></head><body><h2>⚓ PT. INDONUSA TENGGARA MARINE - CREW CHANGE</h2><p><b>Kapal:</b> ${nama} | <b>Bendera:</b> ${k.bendera||'-'} | <b>Pelabuhan:</b> ${k.pelabuhan||'-'}<br><b>Tanggal / Flight:</b> ${data.tgl||'-'} | <b>Disimpan:</b> ${data.tglSimpan||''}</p><h3>🟢 SIAPA YANG NAIK - ${data.on.length} Orang</h3><table><tr><th>No</th><th>Nama</th><th>Passport</th><th>Jabatan</th><th>Kebangsaan</th><th>Status</th></tr>${rowsOn||'<tr><td colspan=6>Tidak ada beb</td></tr>'}</table><h3>🔴 SIAPA YANG TURUN - ${data.off.length} Orang</h3><table><tr><th>No</th><th>Nama</th><th>Passport</th><th>Jabatan</th><th>Kebangsaan</th><th>Status</th></tr>${rowsOff||'<tr><td colspan=6>Tidak ada beb</td></tr>'}</table><br><br><p>Agent, ________________ | Kapten, ________________ | Imigrasi, ________________</p><script>window.print()<\/script></body></html>`;
-  let w=window.open('','_blank'); w.document.write(html); w.document.close();
-}
-renderCrew();
+renderForm(); isiKapal(); renderList();
 </script></body></html>

@@ -1,249 +1,209 @@
-<!DOCTYPE html><html lang="id"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Insiden / Emergency - INDONUSA</title><link rel="stylesheet" href="style.css">
+<!DOCTYPE html><html lang="id"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Insiden - INDONUSA</title>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <style>
-.card-top{position:static !important;background:#fff;padding:10px 14px !important}
-.card-top-head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:8px;flex-wrap:wrap}
-.card-top-head h3{margin:0;font-size:16px}
-.btn-save-atas{background:#F5B301;color:#000;border:0;padding:8px 14px;border-radius:8px;font-weight:900;font-size:13px;cursor:pointer;white-space:nowrap;flex-shrink:0}
-.btn-lihat-foto{background:#0A2F52;color:#fff;border:0;padding:10px 14px;border-radius:8px;font-weight:900;font-size:13px;cursor:pointer;width:100%;margin-top:8px}
-.top-inputs{display:flex;gap:8px}
-.top-inputs>div{flex:1}
-.top-inputs label{display:block;font-size:11px;font-weight:700;margin-bottom:3px;color:#0A2F52}
-.top-inputs input,.top-inputs select,.top-inputs textarea{width:100%;padding:8px 10px !important;font-size:13px !important;border-radius:8px !important;margin:0 !important;box-sizing:border-box}
-.card-bawah{max-height:none !important;overflow:visible !important;padding-right:4px}
-.btn-save-bawah{width:100%;padding:13px;border:0;border-radius:10px;background:#F5B301;color:#000;font-weight:900;font-size:15px;cursor:pointer;margin-top:10px}
-.foto-area{background:#F6F8FB;border:2px dashed #0A2F52;border-radius:12px;padding:12px;margin-top:10px}
-.foto-preview{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}
-.foto-item{position:relative;width:110px;height:110px;border-radius:10px;overflow:hidden;border:2px solid #ddd;background:#fff;flex-shrink:0}
+*{box-sizing:border-box} body{margin:0;font-family:'Segoe UI',Arial;background:#EEF2F7;color:#222}
+.topbar{background:linear-gradient(90deg,#d4af37 0%,#f7eb81 100%);padding:10px 14px;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:200}
+.topbar h1{margin:0;font-size:16px;color:#000;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.btn-back{background:#0A2F52;color:#fff;border:0;padding:9px 14px;border-radius:50px;font-weight:800;cursor:pointer;font-size:13px;white-space:nowrap}
+.wrap{max-width:1100px;margin:0 auto;padding:12px}
+.card-atas{background:#fff;border-radius:12px;padding:12px 14px;position:sticky;top:52px;z-index:100;box-shadow:0 4px 14px rgba(0,0,0,.12);border:1px solid #E6C87A}
+.card-atas h3{margin:0 0 8px;font-size:15px}
+/* ⭐ NAMA KAPAL SEJAJAR DI ATAS SAJA BEB ⭐ */
+.form-atas-kapal{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.form-atas-kapal label{font-size:11px;font-weight:800;color:#555;display:block;margin-bottom:3px}
+.form-atas-kapal input,.form-atas-kapal select{width:100%;padding:9px 10px;border:1px solid #ddd;border-radius:9px;font-size:13px;background:#fff}
+.btn-save-atas{background:#0A2F52;color:#fff;border:0;padding:11px;border-radius:9px;font-weight:900;font-size:14px;cursor:pointer;width:100%;margin-top:8px}
+.card-bawah{background:#fff;border-radius:12px;padding:16px;margin-top:12px}
+label{font-size:12px;font-weight:700;color:#333;display:block;margin-top:10px}
+input,select,textarea{width:100%;padding:10px;border:1px solid #ddd;border-radius:10px;margin-top:5px;font-size:13px;background:#fff;font-family:inherit}
+textarea{min-height:90px;resize:vertical}
+.item{display:flex;justify-content:space-between;gap:10px;padding:12px 0;border-bottom:1px solid #eee;font-size:13px}
+.item:last-child{border-bottom:0}
+.badge{font-size:11px;font-weight:900;padding:4px 8px;border-radius:6px}
+.badge-baru{background:#FFE0E0;color:#B00000}
+.badge-proses{background:#FFF3CD;color:#8A6D00}
+.badge-selesai{background:#D9F7D9;color:#1A7A1A}
+/* ⭐ FOTO BEB ⭐ */
+.btn-foto{background:#1EA0FF;color:#fff;border:0;padding:11px;border-radius:10px;font-weight:900;width:100%;cursor:pointer;font-size:13px;margin-top:5px}
+.preview-foto{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.foto-item{position:relative;width:90px;height:90px;border-radius:10px;overflow:hidden;border:2px solid #ddd}
 .foto-item img{width:100%;height:100%;object-fit:cover}
-.foto-item .btn-hapus-foto{position:absolute;top:4px;right:4px;background:#FF0000;color:#fff;border:0;border-radius:50%;width:24px;height:24px;font-weight:900;cursor:pointer;font-size:14px;line-height:1}
-.foto-item .foto-no{position:absolute;bottom:4px;left:4px;background:rgba(0,0,0,0.7);color:#fff;font-size:10px;font-weight:800;padding:2px 6px;border-radius:10px}
-.btn-foto{background:#0A2F52;color:#fff;border:0;padding:11px 14px;border-radius:8px;font-weight:900;cursor:pointer}
-.btn-foto-plus{background:#8ED68E;color:#0A2F52;border:0;padding:11px 14px;border-radius:8px;font-weight:900;cursor:pointer}
-.filter-box{display:flex;gap:8px;align-items:end;margin:10px 0;background:#F6F8FB;padding:10px;border-radius:10px;border:1px solid #ddd;flex-wrap:wrap}
-.filter-box>div{flex:1}
-.filter-box label{font-size:11px;font-weight:700}
-.filter-box select,.filter-box input{width:100%;padding:8px;border-radius:8px;margin-top:3px;box-sizing:border-box}
-.galeri-box{background:#FFF3CD;border:2px solid #F5B301;border-radius:12px;padding:12px;margin-bottom:12px}
-.galeri-item{position:relative;width:110px;height:110px;border-radius:10px;overflow:hidden;border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,0.2);flex-shrink:0}
-.galeri-item img{width:100%;height:100%;object-fit:cover}
-.galeri-item span{position:absolute;bottom:4px;left:4px;background:rgba(0,0,0,0.7);color:#fff;font-size:9px;font-weight:800;padding:2px 6px;border-radius:10px;max-width:100px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-@media(max-width:700px){ .top-inputs{flex-direction:column} .filter-box{flex-direction:column} }
-</style>
-</head>
-<body><div class="top"><div><b>⚓ INDONUSA MARINE</b></div></div>
-<div class="wrap"><div class="menu" id="menu"></div><div class="main">
+.foto-item button{position:absolute;top:2px;right:2px;background:#B00000;color:#fff;border:0;width:22px;height:22px;border-radius:50%;font-weight:900;cursor:pointer;font-size:12px;line-height:1}
+.foto-list{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.foto-list img{width:70px;height:70px;object-fit:cover;border-radius:8px;cursor:pointer;border:1px solid #ddd}
+.modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:999;padding:12px;align-items:center;justify-content:center}
+.modal.show{display:flex}
+.modal-box{background:#fff;border-radius:12px;width:100%;max-width:900px;max-height:92vh;display:flex;flex-direction:column;overflow:hidden}
+.modal-head{display:flex;justify-content:space-between;align-items:center;padding:12px 14px;background:#0A2F52;color:#fff}
+.modal-head button{background:#FFE0E0;color:#B00000;border:0;width:32px;height:32px;border-radius:50%;font-weight:900;cursor:pointer;font-size:16px}
+.modal-body{flex:1;overflow:auto;padding:10px;background:#000;text-align:center}
+.modal-body img{max-width:100%;max-height:70vh;border-radius:8px}
+@media(max-width:800px){.form-atas-kapal{grid-template-columns:1fr}.topbar h1{font-size:14px}.card-atas{top:50px}}
+</style></head>
+<body>
 
-<div class="card card-top">
-  <div class="card-top-head">
-    <h3>🚨 Insiden / Emergency</h3>
-    <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn-save-atas" style="background:#8ED68E;color:#0A2F52" onclick="tambahBaru()">➕ + TAMBAH BARU</button><button class="btn-save-atas" onclick="simpanInsiden()">💾 SIMPAN LAPORAN</button></div>
-  </div>
-  <button class="btn-lihat-foto" onclick="document.getElementById('bagianGaleri').scrollIntoView({behavior:'smooth'})">📸 LIHAT FOTO YANG SUDAH MASUK ⬇️ - KLIK DI SINI, LANGSUNG LONCAT KE BAWAH</button>
-  <div class="top-inputs" style="margin-top:8px">
-    <div><label>Nama Kapal</label><input id="insKapalNama" placeholder="MY SEAHORSE"></div>
-    <div><label>Pilih Kapal</label><select id="pilihIns"></select></div>
-    <div><label>Tanggal Insiden</label><input type="date" id="insTgl"></div>
-  </div>
-  <div class="top-inputs" style="margin-top:8px">
-    <div><label>Jenis</label><select id="insJenis">
-      <option>Kebakaran</option><option>Kecelakaan Kerja</option><option>Orang Jatuh / MOB</option><option>Kapal Kandas / Grounding</option><option>Tabrakan / Collision</option><option>Kebocoran / Flooding</option><option>Mesin Mati / Blackout</option><option>Cuaca Buruk / Bad Weather</option><option>Medical Emergency</option><option>Pencemaran / Oil Spill</option><option>Lainnya</option>
-    </select></div>
-    <div><label>Lokasi</label><input id="insLokasi" placeholder="Contoh: Engine Room, Dek, Pelabuhan Benoa"></div>
-  </div>
-  <div class="top-inputs" style="margin-top:8px">
-    <div><label>Kronologi</label><textarea id="insKronologi" rows="3" placeholder="Ceritakan kronologinya, jam berapa, bagaimana kejadiannya..."></textarea></div>
-  </div>
-  <div class="top-inputs" style="margin-top:8px">
-    <div><label>Tindakan</label><textarea id="insTindakan" rows="3" placeholder="Apa yang sudah dilakukan? Sudah lapor ke siapa?"></textarea></div>
-  </div>
-
-  <div class="foto-area">
-    <label style="font-size:12px;font-weight:900;color:#0A2F52">📸 Foto Insiden - Bisa Lebih Dari 1 Foto <span id="jmlFoto" style="background:#F5B301;padding:2px 8px;border-radius:20px">0 foto</span></label>
-    <p style="font-size:11px;color:#666;margin:4px 0 8px">Foto otomatis diperkecil agar tersimpan. Dari 5 MB menjadi sekitar 100 KB, tetap jelas. Klik ❌ untuk hapus 1 foto.</p>
-    <div style="display:flex;gap:8px;flex-wrap:wrap">
-      <button class="btn-foto" onclick="document.getElementById('inputFoto').click()">📸 PILIH FOTO</button>
-      <button class="btn-foto-plus" onclick="document.getElementById('inputFoto').click()">➕ + TAMBAH FOTO LAGI</button>
-      <button style="background:#FFE0E0;color:#B00000;border:0;padding:11px 14px;border-radius:8px;font-weight:900;cursor:pointer" onclick="hapusSemuaFoto()">🗑️ - HAPUS SEMUA FOTO</button>
-    </div>
-    <input type="file" id="inputFoto" accept="image/*" multiple style="display:none" onchange="tambahFoto(event)">
-    <div id="previewFoto" class="foto-preview"></div>
-    <div id="infoUkuran" style="font-size:11px;color:#0A6B0A;font-weight:700;margin-top:6px"></div>
-  </div>
-
-  <button class="btn-save-bawah" onclick="simpanInsiden()">💾 SIMPAN LAPORAN - KLIK DI SINI</button>
-  <button class="btn-lihat-foto" onclick="document.getElementById('bagianGaleri').scrollIntoView({behavior:'smooth'})">📸 LIHAT FOTO YANG SUDAH MASUK ⬇️</button>
+<div class="topbar">
+<button class="btn-back" onclick="window.location='index.html'">← 🏠 Dashboard</button>
+<h1>🚨 Insiden - INDONUSA MARINE</h1>
+<span id="statusSync" style="font-size:11px;font-weight:800;color:#000">⏳...</span>
 </div>
 
-<div class="card card-bawah" id="bagianGaleri">
-  <div class="galeri-box">
-    <h3 style="margin:0">📸 GALERI FOTO INSIDEN - Klik Foto Untuk Lihat Lebih Besar</h3>
-    <p style="font-size:12px;color:#666;margin:4px 0 8px">Semua foto yang sudah tersimpan terkumpul di sini. Foto yang sudah masuk ada di sini.</p>
-    <div id="galeriFoto" style="display:flex;gap:10px;flex-wrap:wrap"></div>
-  </div>
+<div class="wrap">
 
-  <h3 style="margin:0">📊 LAPORAN INSIDEN - Semua Kapal & Per Kapal</h3>
-  <div class="filter-box">
-    <div><label>Laporan Kapal:</label><select id="filterKapal" onchange="renderIns()"><option value="SEMUA">📋 SEMUA KAPAL</option></select></div>
-    <div><label>Dari Tanggal</label><input type="date" id="filterDari" onchange="renderIns()"></div>
-    <div><label>Sampai Tanggal</label><input type="date" id="filterSampai" onchange="renderIns()"></div>
-    <div style="flex:0 0 auto"><button onclick="printLaporan()" style="padding:9px 14px;border:0;border-radius:8px;background:#0A2F52;color:#fff;font-weight:900;cursor:pointer">📄 PRINT LAPORAN</button></div>
-  </div>
-  <div id="infoLaporan" style="font-size:13px;color:#666"></div>
-  <div id="listIns"></div>
-  <button class="btn-lihat-foto" onclick="window.scrollTo({top:0,behavior:'smooth'})">⬆️ BALIK KE ATAS</button>
+<!-- ⭐ CARD 1 - ATAS - NAMA KAPAL SEJAJAR DI ATAS ⭐ -->
+<div class="card-atas">
+<h3>🚨 Insiden - <span id="judulKapal">Pilih Kapal</span></h3>
+<div class="form-atas-kapal">
+<div><label>Nama Kapal</label><input id="namaKapal" placeholder="MY SEAHORSE" oninput="document.getElementById('pilihKapal').value='';updateJudul()"></div>
+<div><label>Pilih Kapal</label><select id="pilihKapal" onchange="onPilihKapal()"><option value="">-- Pilih Kapal --</option></select></div>
+</div>
+<button class="btn-save-atas" onclick="simpanInsiden()">💾 SAVE DATA</button>
+<p id="debug" style="font-size:11px;color:#666;margin:6px 0 0"></p>
 </div>
 
-</div></div>
-<script src="db.js"></script><script>menu('insiden.html'); kapalOptions('pilihIns');
-if(!Array.isArray(DB.insiden)) DB.insiden=[];
-if(!DB.insiden.length && DB.emergency){ DB.insiden=Object.keys(DB.emergency).map(n=>({kapal:n,jenis:DB.emergency[n].jenis||'',kronologi:DB.emergency[n].kronologi||'',tindakan:DB.emergency[n].tindakan||'',foto:[],tgl:''})); }
-document.getElementById('insTgl').value=new Date().toISOString().slice(0,10);
-document.getElementById('pilihIns').addEventListener('change', function(){let k=DB.kapal.find(x=>x.id==this.value); if(k) document.getElementById('insKapalNama').value=k.nama; });
+<!-- ⭐ CARD 2 - BAWAH - SCROLL ⭐ -->
+<div class="card-bawah">
+<h3 style="margin:0">🚨 Tambah Insiden</h3>
+<label>Jenis Insiden</label>
+<select id="jenis"><option value="Crew Sakit">🤒 Crew Sakit</option><option value="Kecelakaan">💥 Kecelakaan</option><option value="Kerusakan Mesin">🔧 Kerusakan Mesin</option><option value="Keterlambatan">⏰ Keterlambatan</option><option value="Cuaca Buruk">🌊 Cuaca Buruk</option><option value="Lainnya">📝 Lainnya</option></select>
+<label>Tanggal</label><input id="tgl" type="date">
+<label>Status</label>
+<select id="status"><option value="Baru">🔴 Baru</option><option value="Diproses">🟡 Diproses</option><option value="Selesai">🟢 Selesai</option></select>
+<label>Keterangan</label><textarea id="ket" placeholder="Ceritakan kejadiannya beb..."></textarea>
 
-let fotoSementara=[];
+<label>📸 Foto Insiden - Bisa lebih dari 1 beb!</label>
+<input type="file" id="inputFoto" accept="image/*" multiple style="display:none" onchange="tambahFoto(this)">
+<button class="btn-foto" onclick="document.getElementById('inputFoto').click()">📸 + TAMBAH FOTO (Bisa Banyak Sekaligus)</button>
+<p style="font-size:11px;color:#888;margin:4px 0 0">Pilih banyak foto sekaligus beb, tahan / centang banyak foto di galeri, langsung masuk semua!</p>
+<div class="preview-foto" id="previewFoto"></div>
+
+<h3 style="margin:18px 0 6px">📋 Daftar Insiden - <span id="kapalAktif">Semua Kapal</span></h3>
+<label>Filter Kapal</label>
+<select id="filterKapal" onchange="renderList()"><option value="">-- 🌐 Semua Kapal --</option></select>
+<input placeholder="🔍 Cari insiden..." id="cari" oninput="renderList()" style="margin-top:8px">
+<div id="list"></div>
+</div>
+
+</div>
+
+<div class="modal" id="modalFoto" onclick="if(event.target===this) tutupModalFoto()">
+<div class="modal-box">
+<div class="modal-head"><b id="modalFotoJudul">📸 Foto</b><button onclick="tutupModalFoto()">✕</button></div>
+<div class="modal-body"><img id="modalFotoImg" src=""></div>
+<div style="padding:10px;display:flex;gap:8px;background:#fff">
+<button onclick="downloadFotoAktif()" style="flex:1;padding:11px;border:0;border-radius:10px;background:#F5B301;font-weight:900;cursor:pointer">⬇️ DOWNLOAD FOTO</button>
+<button onclick="tutupModalFoto()" style="flex:1;padding:11px;border:0;border-radius:10px;background:#eee;font-weight:700;cursor:pointer">❌ TUTUP</button>
+</div>
+</div>
+</div>
+
+<script>
+const firebaseConfig = { apiKey: "AIzaSyBI79kjr4WGpmh3OvUxKXcgRao8PMCcxIY", authDomain: "fir-panjepun.firebaseapp.com", projectId: "fir-panjepun", storageBucket: "fir-panjepun.firebasestorage.app", messagingSenderId: "399104502129", appId: "1:399104502129:web:3230853484a64d220c2ed0" };
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+let DB = { kapal:[], clear:{}, clearance:{}, crewChange:{}, provision:{}, finance:{}, insiden:[], videos:[], master:{} };
+try{ let l=JSON.parse(localStorage.getItem('INDONUSA_DB')||'{}'); if(l&&typeof l==='object') DB=Object.assign(DB,l); }catch(e){}
+if(!DB.insiden) DB.insiden=[];
+if(!Array.isArray(DB.insiden)){ let lama=DB.insiden; DB.insiden=[]; Object.keys(lama||{}).forEach(kapal=>{ (lama[kapal]||[]).forEach(x=>DB.insiden.push({...x, kapal:kapal})); }); }
+let fotoBaru=[]; // foto yang lagi dipilih, belum di SAVE beb
+let fotoAktif='';
+function updateJudul(){ document.getElementById('judulKapal').innerText=document.getElementById('namaKapal').value||'Pilih Kapal'; }
+function simpanDB(){
+  document.getElementById('statusSync').innerText='⏳ Menyimpan...';
+  localStorage.setItem('INDONUSA_DB', JSON.stringify(DB));
+  return db.collection("indonusa").doc("data_utama").set(DB).then(()=>{ document.getElementById('statusSync').innerText='✅ Tersimpan ke Firebase'; }).catch(e=>{ document.getElementById('statusSync').innerText='❌ Gagal: '+e.message; alert('GAGAL SAVE BEB!\n'+e.message); });
+}
+db.collection("indonusa").doc("data_utama").onSnapshot(function(doc){
+  if(doc.exists){ let d=doc.data()||{}; DB=Object.assign(DB,d); if(!DB.insiden) DB.insiden=[]; if(!Array.isArray(DB.insiden)){ let lama=DB.insiden; DB.insiden=[]; Object.keys(lama||{}).forEach(kapal=>{ (lama[kapal]||[]).forEach(x=>DB.insiden.push({...x, kapal:kapal})); }); } localStorage.setItem('INDONUSA_DB', JSON.stringify(DB)); }
+  document.getElementById('statusSync').innerText='🟢 Firebase Aktif - '+(DB.kapal||[]).length+' kapal';
+  isiKapal(); renderList();
+});
+function isiKapal(){
+  let s=document.getElementById('pilihKapal'); let f=document.getElementById('filterKapal');
+  let v=s.value, fv=f.value;
+  s.innerHTML='<option value="">-- Pilih Kapal --</option>'+(DB.kapal||[]).map(k=>`<option value="${k.nama}">${k.nama}</option>`).join('');
+  f.innerHTML='<option value="">-- 🌐 Semua Kapal --</option>'+(DB.kapal||[]).map(k=>`<option value="${k.nama}">${k.nama}</option>`).join('');
+  if(v) s.value=v; if(fv) f.value=fv;
+}
+function onPilihKapal(){ let v=document.getElementById('pilihKapal').value; if(v){ document.getElementById('namaKapal').value=v; updateJudul(); } }
+// ⭐ KOMPRES FOTO BIAR NGGAK GEDE BEB - BIAR BISA BANYAK FOTO ⭐
 function kompresFoto(file){
-  return new Promise(res=>{
+  return new Promise((resolve)=>{
     let reader=new FileReader();
-    reader.onload=function(e){
+    reader.onload=(e)=>{
       let img=new Image();
-      img.onload=function(){
-        let max=800;
-        let w=img.width, h=img.height;
-        if(w>max || h>max){
-          let rasio=Math.min(max/w, max/h);
-          w=Math.round(w*rasio); h=Math.round(h*rasio);
-        }
+      img.onload=()=>{
         let canvas=document.createElement('canvas');
+        let max=900; let w=img.width, h=img.height;
+        if(w>max || h>max){ let ratio=Math.min(max/w, max/h); w=Math.round(w*ratio); h=Math.round(h*ratio); }
         canvas.width=w; canvas.height=h;
         canvas.getContext('2d').drawImage(img,0,0,w,h);
-        let hasil=canvas.toDataURL('image/jpeg',0.7);
-        res(hasil);
+        resolve(canvas.toDataURL('image/jpeg',0.75));
       };
       img.src=e.target.result;
     };
     reader.readAsDataURL(file);
   });
 }
-async function tambahFoto(e){
-  let files=e.target.files;
+async function tambahFoto(input){
+  let files=[...input.files];
   if(!files.length) return;
-  document.getElementById('infoUkuran').innerText='⏳ Sedang memperkecil foto, mohon tunggu...';
+  document.getElementById('debug').innerText='⏳ Memproses '+files.length+' foto beb...';
   for(let f of files){
-    let kecil=await kompresFoto(f);
-    fotoSementara.push(kecil);
+    let data=await kompresFoto(f);
+    fotoBaru.push(data);
   }
-  renderPreview();
-  let totalKB=Math.round(JSON.stringify(fotoSementara).length/1024);
-  document.getElementById('infoUkuran').innerText='✅ Foto sudah diperkecil. Total sekarang: '+totalKB+' KB, aman untuk disimpan.';
-  e.target.value='';
+  input.value='';
+  renderPreviewFoto();
+  document.getElementById('debug').innerText='✅ '+fotoBaru.length+' foto siap di SAVE beb!';
 }
-function renderPreview(){
-  document.getElementById('jmlFoto').innerText=fotoSementara.length+' foto';
-  document.getElementById('previewFoto').innerHTML=fotoSementara.map((f,i)=>`<div class="foto-item"><img src="${f}"><button class="btn-hapus-foto" onclick="hapusSatuFoto(${i})" title="Hapus foto ini saja">×</button><span class="foto-no">Foto ${i+1}</span></div>`).join('') || '<p style="font-size:12px;color:#999">Belum ada foto, silakan pilih foto dulu.</p>';
+function renderPreviewFoto(){
+  document.getElementById('previewFoto').innerHTML=fotoBaru.map((f,i)=>`<div class="foto-item"><img src="${f}" onclick="bukaFoto('${f}','Foto ${i+1}')"><button onclick="hapusFotoBaru(${i})">✕</button></div>`).join('')+(fotoBaru.length?`<p style="font-size:11px;color:#1A7A1A;font-weight:800;width:100%;margin:0">✅ ${fotoBaru.length} foto dipilih - klik ✕ buat hapus 1 foto beb!</p>`:'');
 }
-function hapusSatuFoto(idx){
-  if(confirm('Hapus Foto '+(idx+1)+' ini saja? Foto yang lain tetap aman.')){
-    fotoSementara.splice(idx,1); renderPreview();
-  }
+function hapusFotoBaru(i){ fotoBaru.splice(i,1); renderPreviewFoto(); }
+function bukaFoto(data, judul){
+  fotoAktif=data;
+  document.getElementById('modalFotoJudul').innerText='📸 '+judul;
+  document.getElementById('modalFotoImg').src=data;
+  document.getElementById('modalFoto').classList.add('show');
 }
-function hapusSemuaFoto(){
-  if(!fotoSementara.length){ alert('Belum ada foto.'); return; }
-  if(confirm('Hapus SEMUA foto? ('+fotoSementara.length+' foto)')){ fotoSementara=[]; renderPreview(); document.getElementById('infoUkuran').innerText=''; }
-}
-renderPreview();
-function tambahBaru(){
-  document.getElementById('insKapalNama').value='';
-  document.getElementById('pilihIns').value='';
-  document.getElementById('insTgl').value=new Date().toISOString().slice(0,10);
-  document.getElementById('insLokasi').value='';
-  document.getElementById('insKronologi').value='';
-  document.getElementById('insTindakan').value='';
-  fotoSementara=[]; renderPreview(); document.getElementById('infoUkuran').innerText='';
-  document.getElementById('insKapalNama').focus();
+function tutupModalFoto(){ document.getElementById('modalFoto').classList.remove('show'); }
+function downloadFotoAktif(){
+  if(!fotoAktif) return;
+  let a=document.createElement('a'); a.href=fotoAktif; a.download='insiden-foto.jpg'; document.body.appendChild(a); a.click(); a.remove();
 }
 function simpanInsiden(){
-  let nama=getNamaKapal('insKapalNama','pilihIns');
-  if(!nama){ alert('Isi Nama Kapal dulu.'); return; }
-  let jenis=document.getElementById('insJenis').value;
-  let kronologi=document.getElementById('insKronologi').value.trim();
-  if(!kronologi){ alert('Isi Kronologi dulu.'); return; }
-  let tgl=document.getElementById('insTgl').value||new Date().toISOString().slice(0,10);
-  let dataBaru={id:Date.now(),kapal:nama,jenis:jenis,lokasi:document.getElementById('insLokasi').value.trim(),kronologi:kronologi,tindakan:document.getElementById('insTindakan').value.trim(),foto:[...fotoSementara],tgl:tgl,tglSimpan:new Date().toLocaleString('id-ID')};
-  DB.insiden.push(dataBaru);
-  try{ save(); }catch(err){
-    DB.insiden.pop();
-    alert('GAGAL SIMPAN.\nFotonya masih terlalu besar, coba hapus 1-2 foto.\n\nError: '+err.message);
-    return;
-  }
-  let cek=JSON.parse(localStorage.getItem('INDONUSA_DB')||'{}');
-  let ketemu=(cek.insiden||[]).find(x=>x.id===dataBaru.id);
-  if(!ketemu){
-    DB.insiden.pop();
-    alert('GAGAL SIMPAN.\nPenyimpanan sudah penuh. Coba hapus laporan lama, atau hapus 1-2 foto.');
-    return;
-  }
-  renderIns();
-  alert('BERHASIL.\nKapal: '+nama+'\nJenis: '+jenis+'\nFoto: '+fotoSementara.length+' foto - Sudah tersimpan.');
-  document.getElementById('insKronologi').value='';
-  document.getElementById('insTindakan').value='';
-  document.getElementById('insLokasi').value='';
-  fotoSementara=[]; renderPreview(); document.getElementById('infoUkuran').innerText='';
-  document.getElementById('bagianGaleri').scrollIntoView({behavior:'smooth'});
+  let kapal=document.getElementById('namaKapal').value.trim();
+  if(!kapal){ alert('Isi Nama Kapal dulu beb!'); return; }
+  let jenis=document.getElementById('jenis').value;
+  let tgl=document.getElementById('tgl').value || new Date().toISOString().slice(0,10);
+  let status=document.getElementById('status').value;
+  let ket=document.getElementById('ket').value.trim();
+  if(!ket){ alert('Isi Keterangan dulu beb! Ceritakan kejadiannya!'); return; }
+  DB.insiden.push({id:'I'+Date.now()+Math.random().toString().slice(2,6), kapal:kapal, jenis:jenis, tgl:tgl, status:status, ket:ket, fotos:[...fotoBaru]});
+  document.getElementById('debug').innerText='Menyimpan: '+kapal+' | '+jenis+' | '+status+' | '+fotoBaru.length+' foto';
+  simpanDB().then(()=>{ document.getElementById('ket').value=''; fotoBaru=[]; renderPreviewFoto(); renderList(); alert('BERHASIL BEB! ✅\nInsiden '+kapal+' tersimpan!\n'+jenis+' - '+status+'\n📸 '+ (DB.insiden[DB.insiden.length-1].fotos||[]).length +' foto'); });
 }
-function hapusIns(id){
-  if(confirm('Hapus laporan insiden ini?')){ DB.insiden=DB.insiden.filter(x=>x.id!==id); save(); renderIns(); }
+function hapusItem(id){ if(!confirm('Hapus insiden ini beb?'))return; DB.insiden=DB.insiden.filter(x=>x.id!==id); simpanDB().then(()=>renderList()); }
+function ubahStatus(id, statusBaru){
+  let x=DB.insiden.find(v=>v.id===id); if(x){ x.status=statusBaru; simpanDB().then(()=>renderList()); }
 }
-function editIns(id){
-  let d=DB.insiden.find(x=>x.id===id); if(!d) return;
-  document.getElementById('insKapalNama').value=d.kapal;
-  document.getElementById('insTgl').value=d.tgl||'';
-  document.getElementById('insJenis').value=d.jenis||'Kebakaran';
-  document.getElementById('insLokasi').value=d.lokasi||'';
-  document.getElementById('insKronologi').value=d.kronologi||'';
-  document.getElementById('insTindakan').value=d.tindakan||'';
-  fotoSementara=[...(d.foto||[])]; renderPreview();
-  DB.insiden=DB.insiden.filter(x=>x.id!==id); save(); renderIns();
-  window.scrollTo({top:0,behavior:'smooth'});
-  alert('MODE EDIT.\nData '+d.kapal+' sudah naik ke atas, silakan edit lalu klik SIMPAN LAPORAN lagi.');
+function renderList(){
+  isiKapal();
+  let q=(document.getElementById('cari').value||'').toLowerCase();
+  let f=document.getElementById('filterKapal').value;
+  document.getElementById('kapalAktif').innerText=f||'Semua Kapal';
+  let tampil=(DB.insiden||[]).filter(x=>{ if(f && x.kapal!==f) return false; if(q && !JSON.stringify(x).toLowerCase().includes(q)) return false; return true; });
+  let html='';
+  tampil.slice().reverse().forEach(x=>{
+    let badge = x.status==='Selesai'?'badge-selesai':(x.status==='Diproses'?'badge-proses':'badge-baru');
+    let fotos=x.fotos||(x.foto?[x.foto]:[]); // foto lama yang cuma 1, tetep kebaca beb
+    let fotoHtml=fotos.length?`<div class="foto-list">${fotos.map((ft,idx)=>`<img src="${ft}" onclick="bukaFoto('${ft}','${x.kapal} - Foto ${idx+1}')">`).join('')}</div><small style="color:#888">📸 ${fotos.length} foto - klik foto buat gedein beb!</small>`:'';
+    html+=`<div class="item"><div style="flex:1"><b>${x.jenis}</b> <span class="badge ${badge}">${x.status}</span><br><small style="color:#666">🚢 ${x.kapal} | 📅 ${x.tgl||'-'}</small><br><span style="color:#333">${x.ket||''}</span><br>${fotoHtml}<br><select style="width:auto;margin-top:6px;padding:6px;font-size:12px" onchange="ubahStatus('${x.id}',this.value)"><option value="Baru" ${x.status==='Baru'?'selected':''}>🔴 Baru</option><option value="Diproses" ${x.status==='Diproses'?'selected':''}>🟡 Diproses</option><option value="Selesai" ${x.status==='Selesai'?'selected':''}>🟢 Selesai</option></select></div><button style="border:0;border-radius:8px;background:#FFE0E0;color:#B00000;font-weight:900;cursor:pointer;padding:6px 12px;font-size:12px;height:fit-content" onclick="hapusItem('${x.id}')">🗑️ Hapus</button></div>`;
+  });
+  document.getElementById('list').innerHTML=html||'<p style="font-size:13px;color:#888">Belum ada insiden tersimpan beb!</p>';
 }
-function getFiltered(){
-  let fKapal=document.getElementById('filterKapal').value;
-  let dari=document.getElementById('filterDari').value;
-  let sampai=document.getElementById('filterSampai').value;
-  let data=[...DB.insiden].reverse();
-  if(fKapal!=='SEMUA') data=data.filter(x=>x.kapal===fKapal);
-  if(dari) data=data.filter(x=>x.tgl>=dari);
-  if(sampai) data=data.filter(x=>x.tgl<=sampai);
-  return data;
-}
-function renderIns(){
-  let kapalUnik=[...new Set(DB.insiden.map(x=>x.kapal))];
-  let sel=document.getElementById('filterKapal');
-  let cur=sel.value;
-  sel.innerHTML='<option value="SEMUA">📋 SEMUA KAPAL</option>'+kapalUnik.map(k=>`<option value="${k}">⚓ ${k}</option>`).join('');
-  if(kapalUnik.includes(cur)) sel.value=cur;
-  let data=getFiltered();
-  document.getElementById('infoLaporan').innerText=data.length?('Menampilkan '+data.length+' laporan'):'Belum ada data. Silakan isi dulu di atas.';
-  let galeri=document.getElementById('galeriFoto');
-  let semuaFoto=[];
-  data.forEach(x=>(x.foto||[]).forEach((f,i)=>semuaFoto.push({kapal:x.kapal,tgl:x.tgl,jenis:x.jenis,foto:f,no:i+1})));
-  if(!semuaFoto.length){
-    galeri.innerHTML='<p style="font-size:12px;color:#999">Belum ada foto yang tersimpan. Silakan isi dulu di atas.</p>';
-  } else {
-    galeri.innerHTML=semuaFoto.map(f=>`<a href="${f.foto}" target="_blank" style="text-decoration:none"><div class="galeri-item"><img src="${f.foto}"><span>⚓ ${f.kapal} - Foto ${f.no}</span></div></a>`).join('');
-  }
-  if(!data.length){ document.getElementById('listIns').innerHTML=''; return; }
-  document.getElementById('listIns').innerHTML=data.map(x=>`<div style="padding:12px;border:1px solid #ddd;border-radius:10px;margin-bottom:12px;background:#fff"><b>⚓ ${x.kapal}</b> - ${x.tgl||''} - <span style="background:#FFE0E0;padding:2px 8px;border-radius:20px;font-weight:800">${x.jenis}</span><br><b>Lokasi:</b> ${x.lokasi||'-'}<br><b>Kronologi:</b> ${x.kronologi}<br><b>Tindakan:</b> ${x.tindakan||'-'}<br><b>Disimpan:</b> ${x.tglSimpan||''}<br>
-  ${(x.foto||[]).length?`<b>📸 Foto (${x.foto.length} foto):</b><div class="foto-preview">${x.foto.map((f,i)=>`<a href="${f}" target="_blank"><div class="foto-item"><img src="${f}"><span class="foto-no">Foto ${i+1} - Klik untuk besar</span></div></a>`).join('')}</div>`:'<i style="color:#999">Tidak ada foto</i>'}
-  <div style="margin-top:8px"><button onclick="editIns(${x.id})" style="border:1px solid #F5B301;background:#FFF3CD;padding:6px 10px;border-radius:6px;font-weight:800;cursor:pointer">✏️ EDIT</button> <button onclick="hapusIns(${x.id})" style="border:0;background:#FFE0E0;color:#B00000;padding:6px 10px;border-radius:6px;font-weight:800;cursor:pointer">🗑️ HAPUS</button></div></div>`).join('');
-}
-function printLaporan(){
-  let data=getFiltered();
-  if(!data.length){ alert('Belum ada data.'); return; }
-  let fKapal=document.getElementById('filterKapal').value;
-  let rows=data.map(x=>`<div style="border:1px solid #000;padding:12px;margin-bottom:12px"><b>${x.kapal} - ${x.tgl} - ${x.jenis}</b><br><b>Lokasi:</b> ${x.lokasi||'-'}<br><b>Kronologi:</b> ${x.kronologi}<br><b>Tindakan:</b> ${x.tindakan||'-'}<br>${(x.foto||[]).map(f=>`<img src="${f}" style="width:200px;height:150px;object-fit:cover;margin:4px;border:1px solid #000">`).join('')}</div>`).join('');
-  let html=`<html><head><title>Laporan Insiden - ${fKapal}</title><style>body{font-family:Arial;padding:20px}</style></head><body><h2>⚓ PT. INDONUSA TENGGARA MARINE</h2><h3>🚨 LAPORAN INSIDEN / EMERGENCY - ${fKapal==='SEMUA'?'SEMUA KAPAL':fKapal}</h3><p>Periode: ${document.getElementById('filterDari').value||'Awal'} s/d ${document.getElementById('filterSampai').value||'Sekarang'} | Jumlah: ${data.length} laporan</p>${rows}<br><br><p>Dibuat Oleh, ________________ | Kapten, ________________ | Diketahui, ________________</p><script>window.print()<\/script></body></html>`;
-  let w=window.open('','_blank'); w.document.write(html); w.document.close();
-}
-renderIns();
+document.getElementById('tgl').value=new Date().toISOString().slice(0,10);
+isiKapal(); renderList();
 </script></body></html>

@@ -1,134 +1,174 @@
-<!DOCTYPE html><html lang="id"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Provision & Bunker - INDONUSA</title><link rel="stylesheet" href="style.css">
+<!DOCTYPE html><html lang="id"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Provision - INDONUSA</title>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <style>
-.card-top{position:sticky;top:60px;z-index:100;background:#fff;padding:10px 14px !important}
-.card-top-head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:8px}
-.card-top-head h3{margin:0;font-size:16px}
-.btn-save-atas{background:#F5B301;color:#000;border:0;padding:8px 14px;border-radius:8px;font-weight:900;font-size:13px;cursor:pointer;white-space:nowrap;flex-shrink:0}
-.top-inputs{display:flex;gap:8px}
-.top-inputs>div{flex:1}
-.top-inputs label{display:block;font-size:11px;font-weight:700;margin-bottom:3px;color:#0A2F52}
-.top-inputs input,.top-inputs select{width:100%;padding:8px 10px !important;font-size:13px !important;border-radius:8px !important;margin:0 !important;box-sizing:border-box}
-.btn-save-bawah{width:100%;padding:13px;border:0;border-radius:10px;background:#F5B301;color:#000;font-weight:900;font-size:15px;cursor:pointer;margin-top:10px}
-.card-bawah{max-height:78vh;overflow-y:auto;padding-right:4px}
-.card-bawah::-webkit-scrollbar{width:8px}
-.card-bawah::-webkit-scrollbar-thumb{background:#0A2F52;border-radius:10px}
-.btn-baru{background:#8ED68E;color:#0A2F52;border:0;padding:9px 14px;border-radius:8px;font-weight:900;cursor:pointer}
-.filter-box{display:flex;gap:8px;align-items:end;margin:10px 0;background:#F6F8FB;padding:10px;border-radius:10px;border:1px solid #ddd}
-.filter-box>div{flex:1}
-.filter-box label{font-size:11px;font-weight:700}
-.filter-box select,.filter-box input{width:100%;padding:8px;border-radius:8px;margin-top:3px;box-sizing:border-box}
-.tabel-data{width:100%;border-collapse:collapse;font-size:13px;margin-top:8px}
-.tabel-data th,.tabel-data td{border:1px solid #ddd;padding:8px;text-align:left}
-.tabel-data th{background:#0A2F52;color:#fff}
-.total-box{background:#FFF3CD;padding:10px;border-radius:10px;font-weight:900;text-align:right;margin-top:10px}
-@media(max-width:700px){ .card-top{top:52px} .top-inputs{flex-direction:column} .card-bawah{max-height:none} .filter-box{flex-direction:column} }
-</style>
-</head>
-<body><div class="top"><div><b>⚓ INDONUSA MARINE</b></div></div>
-<div class="wrap"><div class="menu" id="menu"></div><div class="main">
+*{box-sizing:border-box} body{margin:0;font-family:'Segoe UI',Arial;background:#EEF2F7;color:#222}
+.topbar{background:linear-gradient(90deg,#d4af37 0%,#f7eb81 100%);padding:10px 14px;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:200}
+.topbar h1{margin:0;font-size:16px;color:#000;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.btn-back{background:#0A2F52;color:#fff;border:0;padding:9px 14px;border-radius:50px;font-weight:800;cursor:pointer;font-size:13px;white-space:nowrap}
+.wrap{max-width:1100px;margin:0 auto;padding:12px}
+.card-atas{background:#fff;border-radius:12px;padding:12px 14px;position:sticky;top:52px;z-index:100;box-shadow:0 4px 14px rgba(0,0,0,.12);border:1px solid #E6C87A}
+.card-atas h3{margin:0 0 8px;font-size:15px}
+.form-atas{display:grid;grid-template-columns:1fr 1fr auto;gap:8px;align-items:end}
+.form-atas label{font-size:11px;font-weight:800;color:#555;display:block;margin-bottom:3px}
+.form-atas input,.form-atas select{width:100%;padding:9px 10px;border:1px solid #ddd;border-radius:9px;font-size:13px;background:#fff}
+.btn-save-atas{background:#0A2F52;color:#fff;border:0;padding:10px 16px;border-radius:9px;font-weight:900;font-size:13px;cursor:pointer;white-space:nowrap;height:39px}
+.card-bawah{background:#fff;border-radius:12px;padding:16px;margin-top:12px}
+label{font-size:12px;font-weight:700;color:#333;display:block;margin-top:10px}
+input,select{width:100%;padding:10px;border:1px solid #ddd;border-radius:10px;margin-top:5px;font-size:13px;background:#fff}
+input::-webkit-outer-spin-button, input::-webkit-inner-spin-button{ -webkit-appearance:none; margin:0; }
+input[type=number]{ -moz-appearance:textfield; appearance:textfield; }
+.head-row{display:grid;grid-template-columns:1.6fr .7fr .9fr 1.1fr 1.1fr 1.2fr 32px 32px;gap:6px;margin-top:12px}
+.head-row b{font-size:10px;color:#0A2F52;background:#EEF2F7;padding:8px 6px;border-radius:8px;text-align:center}
+.row{display:grid;grid-template-columns:1.6fr .7fr .9fr 1.1fr 1.1fr 1.2fr 32px 32px;gap:6px;margin-top:8px;align-items:start}
+.row input,.row select{margin:0;padding:9px 8px;font-size:12px}
+.row small{font-size:10px;color:#888;display:block;margin-top:2px}
+.total-box{background:#E8F5E9;border:1px solid #B9E6B9;padding:8px 10px;border-radius:8px;font-weight:900;font-size:13px;color:#1A7A1A;text-align:right}
+.total-box small{font-weight:400;color:#666;font-size:10px;display:block}
+.btn-mini{border:0;border-radius:10px;font-weight:900;cursor:pointer;font-size:16px;height:39px}
+.btn-plus{background:#1EA0FF;color:#fff}
+.btn-min{background:#FFE0E0;color:#B00000}
+.btn-tambah{background:#F5B301;color:#000;border:0;padding:11px;border-radius:10px;font-weight:900;width:100%;margin-top:10px;cursor:pointer}
+.item{display:flex;justify-content:space-between;gap:10px;padding:10px 0;border-bottom:1px solid #eee;font-size:13px}
+.item:last-child{border-bottom:0}
+.badge{font-size:11px;font-weight:900;padding:4px 8px;border-radius:6px}
+.badge-ok{background:#D9F7D9;color:#1A7A1A}
+.badge-uang{background:#FFF3CD;color:#8A6D00}
+.contoh{background:#FFF8E1;border:1px dashed #F5B301;padding:10px;border-radius:10px;font-size:12px;color:#666;margin-top:10px;line-height:1.6}
+.grand-total{background:#0A2F52;color:#fff;border-radius:10px;padding:12px 14px;display:flex;justify-content:space-between;align-items:center;margin-top:12px}
+.grand-total b{font-size:16px;color:#F5B301}
+@media(max-width:900px){.form-atas{grid-template-columns:1fr 1fr}.btn-save-atas{grid-column:span 2;width:100%}.head-row{display:none}.row{grid-template-columns:1fr 1fr}.topbar h1{font-size:14px}.card-atas{top:50px}}
+</style></head>
+<body>
 
-<!-- ⭐ CARD ATAS - KECIL BEB! ⭐ -->
-<div class="card card-top">
-  <div class="card-top-head">
-    <h3>🛢️ Provision & Bunker</h3>
-    <div style="display:flex;gap:8px"><button class="btn-baru" onclick="tambahBaru()">➕ + TAMBAH BARU</button><button class="btn-save-atas" onclick="simpanLogistik()">💾 SIMPAN LOGISTIK</button></div>
-  </div>
-  <div class="top-inputs">
-    <div><label>Nama Kapal</label><input id="logKapalNama" placeholder="MY SEAHORSE"></div>
-    <div><label>Pilih Kapal</label><select id="pilihLog"></select></div>
-    <div><label>Tanggal</label><input type="date" id="logTgl"></div>
-  </div>
-  <div class="top-inputs" style="margin-top:8px">
-    <div style="flex:2"><label>Item</label><input id="logItem" placeholder="Contoh: bbm 50000ltr/1 bulan, Beras 50kg, Air 1000L"></div>
-    <div><label>Harga (Rp)</label><input id="logHarga" type="number" placeholder="25000000" oninput="formatHarga()"><div id="hargaTampil" style="font-size:11px;color:#0A6B0A;font-weight:700"></div></div>
-  </div>
-  <!-- ⭐ TOMBOL SAVE GEDE DI BAWAH JUGA BEB! ⭐ -->
-  <button class="btn-save-bawah" onclick="simpanLogistik()">💾 SIMPAN LOGISTIK - KLIK DI SINI BEB!</button>
+<div class="topbar">
+<button class="btn-back" onclick="window.location='index.html'">← 🏠 Dashboard</button>
+<h1>📦 Provision - INDONUSA MARINE</h1>
+<span id="statusSync" style="font-size:11px;font-weight:800;color:#000">⏳...</span>
 </div>
 
-<!-- ⭐ CARD BAWAH - LAPORAN BEB! ⭐ -->
-<div class="card card-bawah">
-  <h3 style="margin:0">📊 LAPORAN PROVISION & BUNKER BEB</h3>
-  <div class="filter-box">
-    <div><label>Laporan Kapal Beb:</label><select id="filterKapal" onchange="renderLog()"><option value="SEMUA">📋 SEMUA KAPAL BEB</option></select></div>
-    <div><label>Dari Tanggal</label><input type="date" id="filterDari" onchange="renderLog()"></div>
-    <div><label>Sampai Tanggal</label><input type="date" id="filterSampai" onchange="renderLog()"></div>
-    <div style="flex:0 0 auto"><button onclick="printLaporan()" style="padding:9px 14px;border:0;border-radius:8px;background:#0A2F52;color:#fff;font-weight:900;cursor:pointer">📄 PRINT LAPORAN BEB</button></div>
-  </div>
-  <div id="infoLaporan" style="font-size:13px;color:#666"></div>
-  <div id="listLog"></div>
-  <div id="totalLog" class="total-box"></div>
+<div class="wrap">
+
+<div class="card-atas">
+<h3>📦 Provision - <span id="judulKapal">Pilih Kapal</span></h3>
+<div class="form-atas">
+<div><label>Nama Kapal</label><input id="namaKapal" placeholder="MY SEAHORSE" oninput="document.getElementById('pilihKapal').value='';updateJudul()"></div>
+<div><label>Pilih Kapal</label><select id="pilihKapal" onchange="onPilihKapal()"><option value="">-- Pilih Kapal --</option></select></div>
+<button class="btn-save-atas" onclick="simpanProvision()">💾 SAVE DATA</button>
+</div>
+<p id="debug" style="font-size:11px;color:#666;margin:6px 0 0"></p>
 </div>
 
-</div></div>
-<script src="db.js"></script><script>menu('logistik.html'); kapalOptions('pilihLog');
-if(!Array.isArray(DB.logistik)) DB.logistik=[];
-if(!DB.logistik.length && DB.provision){ DB.logistik=Object.keys(DB.provision).map(n=>({kapal:n,item:DB.provision[n].item||'',harga:DB.provision[n].harga||0,tgl:''})); }
-document.getElementById('logTgl').value=new Date().toISOString().slice(0,10);
-document.getElementById('pilihLog').addEventListener('change', function(){let k=DB.kapal.find(x=>x.id==this.value); if(k) document.getElementById('logKapalNama').value=k.nama; });
-function formatHarga(){
-  let v=document.getElementById('logHarga').value;
-  document.getElementById('hargaTampil').innerText=v?'Rp '+Number(v).toLocaleString('id-ID'):'';
+<div class="card-bawah">
+<h3 style="margin:0">📦 Tambah Provision + 💰 Harga</h3>
+<label>Tanggal</label><input id="tgl" type="date">
+
+<div class="head-row"><b>1. ITEM</b><b>2. JUMLAH</b><b>3. SATUAN</b><b>4. HARGA / SATUAN (Rp)</b><b>5. TOTAL (Rp)</b><b>6. KETERANGAN</b><b></b><b></b></div>
+<div id="formItems"></div>
+<button class="btn-tambah" onclick="tambahBaris()">➕ + TAMBAH ITEM</button>
+
+<div class="contoh">💡 <b>Ketik bebas beb, berapa digit pun bisa!</b><br>Jumlah: ketik <b>10000</b> | Harga: ketik <b>300000000</b> | Total otomatis: <b>Rp 3.000.000.000.000</b></div>
+
+<div class="grand-total"><span>💰 TOTAL BELANJA PROVISION INI:</span><b id="grandTotalForm">Rp 0</b></div>
+
+<h3 style="margin:18px 0 6px">📋 Daftar Provision Tersimpan - <span id="kapalAktif">Semua Kapal</span></h3>
+<label>Filter Kapal</label>
+<select id="filterKapal" onchange="renderList()"><option value="">-- 🌐 Semua Kapal --</option></select>
+<input placeholder="🔍 Cari provision..." id="cari" oninput="renderList()" style="margin-top:8px">
+<div id="list"></div>
+<div class="grand-total"><span>💰 TOTAL SEMUA PROVISION YANG TAMPIL:</span><b id="grandTotalList">Rp 0</b></div>
+</div>
+
+</div>
+
+<datalist id="listSatuan"><option value="kg"></option><option value="dus"></option><option value="liter"></option><option value="pcs"></option><option value="galon"></option><option value="karung"></option><option value="botol"></option><option value="pack"></option></datalist>
+<datalist id="listItem"><option value="Beras"></option><option value="Air Mineral"></option><option value="Buah"></option><option value="Daging"></option><option value="Ayam"></option><option value="Telur"></option><option value="Sayur"></option><option value="Minyak Goreng"></option><option value="Gula"></option><option value="Kopi"></option></datalist>
+
+<script>
+const firebaseConfig = { apiKey: "AIzaSyBI79kjr4WGpmh3OvUxKXcgRao8PMCcxIY", authDomain: "fir-panjepun.firebaseapp.com", projectId: "fir-panjepun", storageBucket: "fir-panjepun.firebasestorage.app", messagingSenderId: "399104502129", appId: "1:399104502129:web:3230853484a64d220c2ed0" };
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+let DB = { kapal:[], clear:{}, clearance:{}, crewChange:{}, provision:{}, finance:{}, insiden:[], videos:[], master:{} };
+try{ let l=JSON.parse(localStorage.getItem('INDONUSA_DB')||'{}'); if(l&&typeof l==='object') DB=Object.assign(DB,l); }catch(e){}
+if(!DB.provision) DB.provision={};
+let rows=[{item:'',jumlah:'',satuan:'',harga:'',ket:''}];
+function rp(n){ n=Number(n)||0; return 'Rp '+n.toLocaleString('id-ID'); }
+function updateJudul(){ document.getElementById('judulKapal').innerText=document.getElementById('namaKapal').value||'Pilih Kapal'; }
+function simpanDB(){
+  document.getElementById('statusSync').innerText='⏳ Menyimpan...';
+  localStorage.setItem('INDONUSA_DB', JSON.stringify(DB));
+  return db.collection("indonusa").doc("data_utama").set(DB).then(()=>{ document.getElementById('statusSync').innerText='✅ Tersimpan ke Firebase'; }).catch(e=>{ document.getElementById('statusSync').innerText='❌ Gagal: '+e.message; alert('GAGAL SAVE BEB!\n'+e.message); });
 }
-function formatRp(n){ return 'Rp '+Number(n||0).toLocaleString('id-ID'); }
-function tambahBaru(){
-  document.getElementById('logKapalNama').value='';
-  document.getElementById('pilihLog').value='';
-  document.getElementById('logItem').value='';
-  document.getElementById('logHarga').value='';
-  document.getElementById('hargaTampil').innerText='';
-  document.getElementById('logTgl').value=new Date().toISOString().slice(0,10);
-  document.getElementById('logKapalNama').focus();
+db.collection("indonusa").doc("data_utama").onSnapshot(function(doc){
+  if(doc.exists){ let d=doc.data()||{}; DB=Object.assign(DB,d); if(!DB.provision) DB.provision={}; localStorage.setItem('INDONUSA_DB', JSON.stringify(DB)); }
+  document.getElementById('statusSync').innerText='🟢 Firebase Aktif - '+(DB.kapal||[]).length+' kapal';
+  isiKapal(); renderList();
+});
+function isiKapal(){
+  let s=document.getElementById('pilihKapal'); let f=document.getElementById('filterKapal');
+  let v=s.value, fv=f.value;
+  s.innerHTML='<option value="">-- Pilih Kapal --</option>'+(DB.kapal||[]).map(k=>`<option value="${k.nama}">${k.nama}</option>`).join('');
+  f.innerHTML='<option value="">-- 🌐 Semua Kapal --</option>'+(DB.kapal||[]).map(k=>`<option value="${k.nama}">${k.nama}</option>`).join('');
+  if(v) s.value=v; if(fv) f.value=fv;
 }
-function simpanLogistik(){
-  let nama=getNamaKapal('logKapalNama','pilihLog');
-  if(!nama){ alert('Isi Nama Kapal dulu beb!'); return; }
-  let item=document.getElementById('logItem').value.trim();
-  if(!item){ alert('Isi Item dulu beb!'); return; }
-  let harga=Number(document.getElementById('logHarga').value||0);
-  let tgl=document.getElementById('logTgl').value||new Date().toISOString().slice(0,10);
-  DB.logistik.push({id:Date.now(),kapal:nama,item:item,harga:harga,tgl:tgl,tglSimpan:new Date().toLocaleString('id-ID')});
-  save(); renderLog();
-  alert('BERHASIL BEB! ✅\n'+nama+' - '+item+' - '+formatRp(harga)+'\n\nUdah kesimpen beb! Mau isi lagi beb? Formnya langsung dikosongin beb!');
-  document.getElementById('logItem').value='';
-  document.getElementById('logHarga').value='';
-  document.getElementById('hargaTampil').innerText='';
-  document.getElementById('logItem').focus();
+function onPilihKapal(){ let v=document.getElementById('pilihKapal').value; if(v){ document.getElementById('namaKapal').value=v; updateJudul(); } }
+// ⭐ INI KUNCINYA BEB - UPDATE TOTAL DOANG, JANGAN RENDER ULANG FORM NYA! ⭐
+function updateTotalSaja(i){
+  let tot=(Number(rows[i].jumlah)||0)*(Number(rows[i].harga)||0);
+  let el=document.getElementById('total-'+i);
+  if(el) el.innerHTML=rp(tot)+'<small>Auto: Jml x Harga</small>';
+  let grand=rows.reduce((a,r)=>a+((Number(r.jumlah)||0)*(Number(r.harga)||0)),0);
+  document.getElementById('grandTotalForm').innerText=rp(grand);
 }
-function hapusLog(id){
-  if(confirm('Hapus data ini beb?')){ DB.logistik=DB.logistik.filter(x=>x.id!==id); save(); renderLog(); }
+function renderForm(){
+  document.getElementById('formItems').innerHTML=rows.map((r,i)=>{
+    let tot=(Number(r.jumlah)||0)*(Number(r.harga)||0);
+    return `<div class="row">
+    <div><input list="listItem" placeholder="Ketik: Beras" value="${r.item}" oninput="rows[${i}].item=this.value"><small>Ketik manual beb</small></div>
+    <div><input type="text" inputmode="numeric" placeholder="Ketik: 10" value="${r.jumlah}" oninput="rows[${i}].jumlah=this.value.replace(/[^0-9]/g,'');this.value=rows[${i}].jumlah;updateTotalSaja(${i})"><small>Ketik angka aja - bebas digit</small></div>
+    <div><input list="listSatuan" placeholder="Ketik: kg" value="${r.satuan}" oninput="rows[${i}].satuan=this.value"><small>Ketik: kg / dus / liter</small></div>
+    <div><input type="text" inputmode="numeric" placeholder="Ketik: 15000" value="${r.harga}" oninput="rows[${i}].harga=this.value.replace(/[^0-9]/g,'');this.value=rows[${i}].harga;updateTotalSaja(${i})"><small>Rp per 1 satuan</small></div>
+    <div><div class="total-box" id="total-${i}">${rp(tot)}<small>Auto: Jml x Harga</small></div></div>
+    <div><input placeholder="Untuk 20 crew" value="${r.ket}" oninput="rows[${i}].ket=this.value"><small>Ketik bebas</small></div>
+    <button class="btn-mini btn-plus" onclick="tambahBaris()">+</button>
+    <button class="btn-mini btn-min" onclick="hapusBaris(${i})">-</button>
+  </div>`}).join('');
+  let grand=rows.reduce((a,r)=>a+((Number(r.jumlah)||0)*(Number(r.harga)||0)),0);
+  document.getElementById('grandTotalForm').innerText=rp(grand);
 }
-function getFiltered(){
-  let fKapal=document.getElementById('filterKapal').value;
-  let dari=document.getElementById('filterDari').value;
-  let sampai=document.getElementById('filterSampai').value;
-  let data=[...DB.logistik].reverse();
-  if(fKapal!=='SEMUA') data=data.filter(x=>x.kapal===fKapal);
-  if(dari) data=data.filter(x=>x.tgl>=dari);
-  if(sampai) data=data.filter(x=>x.tgl<=sampai);
-  return data;
+function tambahBaris(){ rows.push({item:'',jumlah:'',satuan:'',harga:'',ket:''}); renderForm(); }
+function hapusBaris(i){ if(rows.length>1) rows.splice(i,1); renderForm(); }
+function simpanProvision(){
+  let kapal=document.getElementById('namaKapal').value.trim();
+  if(!kapal){ alert('Isi Nama Kapal dulu beb!'); return; }
+  let tgl=document.getElementById('tgl').value || new Date().toISOString().slice(0,10);
+  let items=rows.filter(r=>r.item.trim()).map(r=>({id:'P'+Date.now()+Math.random().toString().slice(2,6), item:r.item, jumlah:r.jumlah, satuan:r.satuan, harga:r.harga, total:(Number(r.jumlah)||0)*(Number(r.harga)||0), ket:r.ket, tgl:tgl, kapal:kapal}));
+  if(!items.length){ alert('Isi minimal 1 Item dulu beb! Contoh: Beras'); return; }
+  if(!DB.provision[kapal]) DB.provision[kapal]=[];
+  DB.provision[kapal].push(...items);
+  let tot=items.reduce((a,x)=>a+x.total,0);
+  document.getElementById('debug').innerText='Menyimpan: '+kapal+' | '+items.length+' item | Total: '+rp(tot);
+  simpanDB().then(()=>{ rows=[{item:'',jumlah:'',satuan:'',harga:'',ket:''}]; renderForm(); renderList(); alert('BERHASIL BEB! ✅\nProvision '+kapal+' tersimpan!\n'+items.length+' item\n💰 Total: '+rp(tot)); });
 }
-function renderLog(){
-  let kapalUnik=[...new Set(DB.logistik.map(x=>x.kapal))];
-  let sel=document.getElementById('filterKapal');
-  let cur=sel.value;
-  sel.innerHTML='<option value="SEMUA">📋 SEMUA KAPAL BEB</option>'+kapalUnik.map(k=>`<option value="${k}">⚓ ${k} beb</option>`).join('');
-  if(kapalUnik.includes(cur)) sel.value=cur;
-  let data=getFiltered();
-  let total=data.reduce((a,b)=>a+Number(b.harga||0),0);
-  document.getElementById('infoLaporan').innerText=data.length?('Menampilkan '+data.length+' data beb - Filter: '+(document.getElementById('filterKapal').value==='SEMUA'?'Semua Kapal beb':'Kapal '+document.getElementById('filterKapal').value+' beb')):'Belum ada data beb! Isi dulu beb di atas beb!';
-  if(!data.length){ document.getElementById('listLog').innerHTML=''; document.getElementById('totalLog').innerText=''; return; }
-  document.getElementById('listLog').innerHTML=`<table class="tabel-data"><tr><th>Tanggal</th><th>Kapal</th><th>Item</th><th>Harga</th><th>Aksi</th></tr>${data.map(x=>`<tr><td>${x.tgl||'-'}</td><td><b>${x.kapal}</b></td><td>${x.item}</td><td>${formatRp(x.harga)}</td><td><button onclick="hapusLog(${x.id})" style="border:0;background:#FFE0E0;color:#B00000;padding:5px 8px;border-radius:6px;font-weight:800;cursor:pointer">🗑️</button></td></tr>`).join('')}</table>`;
-  document.getElementById('totalLog').innerText='TOTAL: '+formatRp(total)+' ('+data.length+' item beb)';
+function hapusItem(kapal,id){ if(!confirm('Hapus item ini beb?'))return; if(DB.provision[kapal]) DB.provision[kapal]=DB.provision[kapal].filter(x=>x.id!==id); simpanDB().then(()=>renderList()); }
+function renderList(){
+  isiKapal();
+  let q=(document.getElementById('cari').value||'').toLowerCase();
+  let f=document.getElementById('filterKapal').value;
+  document.getElementById('kapalAktif').innerText=f||'Semua Kapal';
+  let html=''; let grand=0;
+  Object.keys(DB.provision||{}).forEach(kapal=>{
+    if(f && kapal!==f) return;
+    (DB.provision[kapal]||[]).forEach(p=>{
+      if(q && !JSON.stringify(p).toLowerCase().includes(q)) return;
+      let tot=p.total!=null?p.total:((Number(p.jumlah)||0)*(Number(p.harga)||0));
+      grand+=tot;
+      html+=`<div class="item"><div><b>${p.item}</b> <span class="badge badge-ok">📦 ${p.jumlah||'-'} ${p.satuan||''}</span> <span class="badge badge-uang">💰 ${rp(p.harga||0)} / ${p.satuan||''} = ${rp(tot)}</span><br><small style="color:#666">🚢 ${kapal} | 📅 ${p.tgl||'-'} | 📝 ${p.ket||'-'}</small></div><button class="btn-mini btn-min" style="padding:6px 12px;font-size:12px;height:auto" onclick="hapusItem('${kapal}','${p.id}')">🗑️ Hapus</button></div>`;
+    });
+  });
+  document.getElementById('list').innerHTML=html||'<p style="font-size:13px;color:#888">Belum ada provision tersimpan beb!</p>';
+  document.getElementById('grandTotalList').innerText=rp(grand);
 }
-function printLaporan(){
-  let data=getFiltered();
-  if(!data.length){ alert('Belum ada data beb!'); return; }
-  let total=data.reduce((a,b)=>a+Number(b.harga||0),0);
-  let fKapal=document.getElementById('filterKapal').value;
-  let rows=data.map((x,i)=>`<tr><td>${i+1}</td><td>${x.tgl||'-'}</td><td>${x.kapal}</td><td>${x.item}</td><td>${formatRp(x.harga)}</td></tr>`).join('');
-  let html=`<html><head><title>Laporan Provision - ${fKapal}</title><style>body{font-family:Arial;padding:20px}table{width:100%;border-collapse:collapse;font-size:12px}th,td{border:1px solid #000;padding:8px}th{background:#0A2F52;color:#fff}</style></head><body><h2>⚓ PT. INDONUSA TENGGARA MARINE</h2><h3>📊 LAPORAN PROVISION & BUNKER - ${fKapal==='SEMUA'?'SEMUA KAPAL':fKapal}</h3><p>Periode: ${document.getElementById('filterDari').value||'Awal'} s/d ${document.getElementById('filterSampai').value||'Sekarang'} | Jumlah: ${data.length} item | Total: ${formatRp(total)}</p><table><tr><th>No</th><th>Tanggal</th><th>Kapal</th><th>Item</th><th>Harga</th></tr>${rows}</table><br><p style="text-align:right;font-weight:900">TOTAL: ${formatRp(total)}</p><br><br><p>Dibuat Oleh, ________________ | Disetujui, ________________</p><script>window.print()<\/script></body></html>`;
-  let w=window.open('','_blank'); w.document.write(html); w.document.close();
-}
-renderLog();
+document.getElementById('tgl').value=new Date().toISOString().slice(0,10);
+renderForm(); isiKapal(); renderList();
 </script></body></html>

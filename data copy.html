@@ -1,0 +1,223 @@
+<!DOCTYPE html><html lang="id"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Semua Data - INDONUSA</title>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<style>
+*{box-sizing:border-box} body{margin:0;font-family:'Segoe UI',Arial;background:#EEF2F7;color:#222}
+.topbar{background:linear-gradient(90deg,#d4af37 0%,#f7eb81 100%);padding:10px 14px;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:100}
+.topbar h1{margin:0;font-size:16px;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.btn-back{background:#0A2F52;color:#fff;border:0;padding:9px 14px;border-radius:50px;font-weight:800;cursor:pointer;font-size:13px;white-space:nowrap}
+.wrap{max-width:1100px;margin:0 auto;padding:12px}
+.card{background:#fff;border-radius:12px;padding:16px;margin-top:12px}
+.badge{font-size:11px;font-weight:900;padding:4px 8px;border-radius:6px}
+.badge-ok{background:#D9F7D9;color:#1A7A1A}
+.badge-no{background:#FFE0E0;color:#B00000}
+.badge-proses{background:#FFF3CD;color:#8A6D00}
+.badge-uang{background:#FFF3CD;color:#8A6D00}
+.badge-masuk{background:#D9F7D9;color:#1A7A1A}
+.badge-keluar{background:#FFE0E0;color:#B00000}
+.badge-baru{background:#FFE0E0;color:#B00000}
+.badge-selesai{background:#D9F7D9;color:#1A7A1A}
+input,select{width:100%;padding:10px;border:1px solid #ddd;border-radius:10px;margin-top:6px;font-size:13px;background:#fff}
+.small{font-size:12px;color:#666;line-height:1.6}
+.filter-row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.filter-row label{font-size:11px;font-weight:800;color:#555;margin:0}
+.btn-file{padding:8px 12px;margin:2px;border:0;border-radius:8px;background:#0A2F52;color:#fff;font-weight:700;cursor:pointer;font-size:12px}
+.foto-list{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+.foto-list img{width:70px;height:70px;object-fit:cover;border-radius:8px;cursor:pointer;border:1px solid #ddd}
+.modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:999;padding:12px;align-items:center;justify-content:center}
+.modal.show{display:flex}
+.modal-box{background:#fff;border-radius:12px;width:100%;max-width:900px;max-height:92vh;display:flex;flex-direction:column;overflow:hidden}
+.modal-head{display:flex;justify-content:space-between;align-items:center;padding:12px 14px;background:#0A2F52;color:#fff}
+.modal-head b{font-size:14px}
+.modal-head button{background:#FFE0E0;color:#B00000;border:0;width:32px;height:32px;border-radius:50%;font-weight:900;cursor:pointer;font-size:16px}
+.modal-body{flex:1;overflow:auto;padding:10px;background:#F6F8FB}
+.modal-body iframe{width:100%;height:70vh;border:0;background:#fff;border-radius:8px}
+.modal-body img{max-width:100%;display:block;margin:0 auto;border-radius:8px}
+@media(max-width:700px){.filter-row{grid-template-columns:1fr}.topbar h1{font-size:14px}}
+</style></head>
+<body>
+<div class="topbar"><button class="btn-back" onclick="window.location='index.html'">← 🏠 Dashboard</button><h1>📂 Semua Data - INDONUSA MARINE</h1><span id="statusSync" style="font-size:11px;font-weight:800">⏳...</span></div>
+<div class="wrap">
+<div class="card"><h3 style="margin:0">📊 Ringkasan</h3><p id="ringkas" class="small">Loading...</p>
+<div class="filter-row">
+<div><label>🚢 Pilih Kapal</label><select id="filterKapal" onchange="render()"><option value="">-- 🌐 Semua Kapal --</option></select></div>
+<div><label>🔍 Cari</label><input id="cari" placeholder="🔍 Cari kapal / crew / dokumen / provision / finance / insiden..." oninput="render()"></div>
+</div>
+</div>
+<div id="list"></div>
+</div>
+
+<div class="modal" id="modalFile" onclick="if(event.target===this) tutupModal()">
+<div class="modal-box">
+<div class="modal-head"><b id="modalJudul">📄 Preview File</b><button onclick="tutupModal()">✕</button></div>
+<div class="modal-body" id="modalBody"></div>
+<div style="padding:10px;display:flex;gap:8px">
+<button onclick="downloadFile()" style="flex:1;padding:11px;border:0;border-radius:10px;background:#F5B301;font-weight:900;cursor:pointer">⬇️ DOWNLOAD FILE</button>
+<button onclick="tutupModal()" style="flex:1;padding:11px;border:0;border-radius:10px;background:#eee;font-weight:700;cursor:pointer">❌ TUTUP</button>
+</div>
+</div>
+</div>
+
+<script>
+const firebaseConfig = { apiKey: "AIzaSyBI79kjr4WGpmh3OvUxKXcgRao8PMCcxIY", authDomain: "fir-panjepun.firebaseapp.com", projectId: "fir-panjepun", storageBucket: "fir-panjepun.firebasestorage.app", messagingSenderId: "399104502129", appId: "1:399104502129:web:3230853484a64d220c2ed0" };
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+let DB = { kapal:[], clear:{}, clearance:{}, crewChange:{}, provision:{}, finance:{}, insiden:[], videos:[], master:{} };
+let fileAktif = { data:'', nama:'', kapal:'', dok:'' };
+try{ let l=JSON.parse(localStorage.getItem('INDONUSA_DB')||'{}'); if(l&&typeof l==='object') DB=Object.assign(DB,l); }catch(e){}
+function rp(n){ n=Number(n)||0; return 'Rp '+n.toLocaleString('id-ID'); }
+db.collection("indonusa").doc("data_utama").onSnapshot(function(doc){
+  if(doc.exists){ let d=doc.data()||{}; DB=Object.assign(DB,d); localStorage.setItem('INDONUSA_DB', JSON.stringify(DB)); }
+  document.getElementById('statusSync').innerText='🟢 Firebase Aktif - '+(DB.kapal||[]).length+' kapal';
+  isiDropdown(); render();
+});
+function isiDropdown(){
+  let s=document.getElementById('filterKapal'); let v=s.value;
+  let namaSet=new Set();
+  (DB.kapal||[]).forEach(k=>{ if(k.nama) namaSet.add(k.nama); });
+  Object.keys(Object.assign({}, DB.clear||{}, DB.clearance||{})).forEach(n=>namaSet.add(n));
+  Object.keys(DB.crewChange||{}).forEach(n=>namaSet.add(n));
+  Object.keys(DB.provision||{}).forEach(n=>namaSet.add(n));
+  Object.keys(DB.finance||{}).forEach(n=>namaSet.add(n));
+  if(Array.isArray(DB.finance)) DB.finance.forEach(x=>{ if(x.kapal) namaSet.add(x.kapal); });
+  // ⭐ Insiden - ambil nama kapalnya beb ⭐
+  if(Array.isArray(DB.insiden)) DB.insiden.forEach(x=>{ if(x.kapal) namaSet.add(x.kapal); });
+  else Object.keys(DB.insiden||{}).forEach(n=>namaSet.add(n));
+  let list=[...namaSet].sort();
+  s.innerHTML='<option value="">-- 🌐 Semua Kapal ('+list.length+') --</option>'+list.map(n=>`<option value="${n}">🚢 ${n}</option>`).join('');
+  if(v) s.value=v;
+}
+function cariClearance(namaKapal){
+  let cari = (namaKapal||'').toLowerCase().trim();
+  let all = Object.assign({}, DB.clear||{}, DB.clearance||{});
+  if(all[namaKapal]) return all[namaKapal];
+  for(let k of Object.keys(all)){ if(k.toLowerCase().trim()===cari) return all[k]; }
+  return null;
+}
+function cariProvision(namaKapal){
+  let cari=(namaKapal||'').toLowerCase().trim();
+  let all=DB.provision||{};
+  if(all[namaKapal]) return all[namaKapal];
+  for(let k of Object.keys(all)){ if(k.toLowerCase().trim()===cari) return all[k]; }
+  return [];
+}
+function cariFinance(namaKapal){
+  let cari=(namaKapal||'').toLowerCase().trim();
+  if(Array.isArray(DB.finance)) return DB.finance.filter(x=>(x.kapal||'').toLowerCase().trim()===cari);
+  let all=DB.finance||{};
+  if(all[namaKapal]) return all[namaKapal];
+  for(let k of Object.keys(all)){ if(k.toLowerCase().trim()===cari) return all[k]; }
+  return [];
+}
+// ⭐ CARI INSIDEN - BISA ARRAY BARU / OBJECT LAMA BEB ⭐
+function cariInsiden(namaKapal){
+  let cari=(namaKapal||'').toLowerCase().trim();
+  if(Array.isArray(DB.insiden)) return DB.insiden.filter(x=>(x.kapal||'').toLowerCase().trim()===cari);
+  let all=DB.insiden||{};
+  if(all[namaKapal]) return all[namaKapal];
+  for(let k of Object.keys(all)){ if(k.toLowerCase().trim()===cari) return all[k]; }
+  return [];
+}
+function bukaFile(kapal, namaDok){
+  let cl=cariClearance(kapal); if(!cl) return;
+  let c=(cl.checks||[]).find(x=>x.nama===namaDok); if(!c || !c.fileData){ alert('File belum ada beb! Di clear.html nya belum di-upload / belum di SAVE beb!'); return; }
+  fileAktif={data:c.fileData, nama:c.file||namaDok, kapal:kapal, dok:namaDok};
+  document.getElementById('modalJudul').innerText='📄 '+kapal+' - '+namaDok+' - '+(c.file||'');
+  let body=document.getElementById('modalBody');
+  if(c.fileData.includes('application/pdf') || (c.file||'').toLowerCase().endsWith('.pdf')){
+    body.innerHTML='<iframe src="'+c.fileData+'"></iframe><p style="font-size:12px;color:#666;text-align:center">Kalau di HP nggak muncul, klik DOWNLOAD FILE di bawah beb!</p>';
+  } else {
+    body.innerHTML='<img src="'+c.fileData+'">';
+  }
+  document.getElementById('modalFile').classList.add('show');
+}
+function tutupModal(){ document.getElementById('modalFile').classList.remove('show'); document.getElementById('modalBody').innerHTML=''; }
+function downloadFile(){
+  if(!fileAktif.data) return;
+  let a=document.createElement('a'); a.href=fileAktif.data; a.download=fileAktif.nama||fileAktif.dok; document.body.appendChild(a); a.click(); a.remove();
+}
+function bukaFotoInsiden(data, judul){
+  fileAktif={data:data, nama:'insiden-foto.jpg', kapal:'', dok:judul};
+  document.getElementById('modalJudul').innerText='📸 '+judul;
+  document.getElementById('modalBody').innerHTML='<img src="'+data+'">';
+  document.getElementById('modalFile').classList.add('show');
+}
+function render(){
+  isiDropdown();
+  let q=(document.getElementById('cari').value||'').toLowerCase();
+  let fKapal=document.getElementById('filterKapal').value;
+  let kapals=DB.kapal||[];
+  if(fKapal) kapals=kapals.filter(k=>k.nama===fKapal);
+  let totalCrew=0; Object.values(DB.crewChange||{}).forEach(v=>{ totalCrew+=(v.on||[]).length+(v.off||[]).length; });
+  let totalClear=Object.keys(Object.assign({}, DB.clear||{}, DB.clearance||{})).length;
+  let totalProvItem=0; let totalProvUang=0;
+  Object.values(DB.provision||{}).forEach(arr=>{ (arr||[]).forEach(p=>{ totalProvItem++; totalProvUang+=(p.total!=null?p.total:((Number(p.jumlah)||0)*(Number(p.harga)||0))); }); });
+  let totalFinMasuk=0; let totalFinKeluar=0;
+  if(Array.isArray(DB.finance)){ DB.finance.forEach(x=>{ if(x.jenis==='Pemasukan') totalFinMasuk+=(Number(x.jumlah)||0); else totalFinKeluar+=(Number(x.jumlah)||0); }); }
+  else { Object.values(DB.finance||{}).forEach(arr=>{ (arr||[]).forEach(x=>{ if(x.jenis==='Pemasukan') totalFinMasuk+=(Number(x.jumlah)||0); else totalFinKeluar+=(Number(x.jumlah)||0); }); }); }
+  let totalInsiden=Array.isArray(DB.insiden)?DB.insiden.length:Object.values(DB.insiden||{}).reduce((a,v)=>a+(v||[]).length,0);
+  let totalInsidenBaru=Array.isArray(DB.insiden)?DB.insiden.filter(x=>x.status==='Baru').length:0;
+  document.getElementById('ringkas').innerHTML=`Kapal: <b>${(DB.kapal||[]).length}</b> | Total Crew: <b>${totalCrew}</b> | Kapal ada Clearance: <b>${totalClear}</b> | Provision: <b>${totalProvItem} item - ${rp(totalProvUang)}</b> | Finance: <b>🟢 ${rp(totalFinMasuk)} | 🔴 ${rp(totalFinKeluar)} | 🟡 Saldo ${rp(totalFinMasuk-totalFinKeluar)}</b> | Insiden: <b>🚨 ${totalInsiden} insiden (${totalInsidenBaru} Baru)</b> ${fKapal?` | 🔎 Lagi liat: <b>${fKapal}</b>`:''}`;
+  let html='';
+  kapals.forEach(k=>{
+    let nama=k.nama;
+    if(q && !JSON.stringify(k).toLowerCase().includes(q) && !nama.toLowerCase().includes(q) && !JSON.stringify(cariProvision(nama)).toLowerCase().includes(q) && !JSON.stringify(cariFinance(nama)).toLowerCase().includes(q) && !JSON.stringify(cariInsiden(nama)).toLowerCase().includes(q)) return;
+    let crew=DB.crewChange?.[nama] || DB.crewChange?.[Object.keys(DB.crewChange||{}).find(x=>x.toLowerCase()===nama.toLowerCase())] || {on:[],off:[]};
+    let onNames=(crew.on||[]).map(x=>x.nama).join(', ')||'-';
+    let offNames=(crew.off||[]).map(x=>x.nama).join(', ')||'-';
+    let cl=cariClearance(nama);
+    let clHtml='';
+    if(!cl){ clHtml='<p class="small">Belum ada clearance untuk kapal ini.</p>'; }
+    else {
+      let ada=(cl.checks||[]).filter(c=>c.status.includes('ADA')).length;
+      let total=(cl.checks||[]).length;
+      clHtml=`<p class="small"><b>${cl.status||'-'} - ${ada}/${total} dokumen MASUK</b> | No: ${cl.noSurat||'-'} | Tgl Simpan: ${cl.tglSimpan||cl.tgl||'-'}<br>${(cl.checks||[]).map(c=>`${c.status.includes('ADA')?'✅':'❌'} ${c.nama} - No. ${c.no||'-'} - File: ${c.file||'-'} ${c.catat?'- '+c.catat:''}`).join('<br>')}</p>`;
+      (cl.checks||[]).forEach(c=>{ if(c.fileData) clHtml+=`<button class="btn-file" onclick="bukaFile('${nama.replace(/'/g,"\\'")}','${c.nama.replace(/'/g,"\\'")}')">📄 ${c.nama}</button>`; else if(c.status.includes('ADA')) clHtml+=`<span style="font-size:11px;color:#888;margin:2px;display:inline-block">📄 ${c.nama} (No file)</span>`; });
+    }
+    let prov=cariProvision(nama);
+    let provHtml='';
+    if(!prov || !prov.length){ provHtml='<p class="small">Belum ada provision untuk kapal ini.</p>'; }
+    else {
+      let totProv=prov.reduce((a,p)=>a+(p.total!=null?p.total:((Number(p.jumlah)||0)*(Number(p.harga)||0))),0);
+      provHtml=`<p class="small"><b>${prov.length} item - 💰 TOTAL: ${rp(totProv)}</b><br>${prov.map(p=>{
+        let tot=p.total!=null?p.total:((Number(p.jumlah)||0)*(Number(p.harga)||0));
+        return `📦 ${p.item} - ${p.jumlah||'-'} ${p.satuan||''} x ${rp(p.harga||0)} = <b>${rp(tot)}</b> | 📅 ${p.tgl||'-'} | 📝 ${p.ket||'-'}`;
+      }).join('<br>')}</p>`;
+    }
+    let fin=cariFinance(nama);
+    let finHtml='';
+    if(!fin || !fin.length){ finHtml='<p class="small">Belum ada finance untuk kapal ini.</p>'; }
+    else {
+      let masuk=fin.filter(x=>x.jenis==='Pemasukan').reduce((a,x)=>a+(Number(x.jumlah)||0),0);
+      let keluar=fin.filter(x=>x.jenis==='Pengeluaran').reduce((a,x)=>a+(Number(x.jumlah)||0),0);
+      finHtml=`<p class="small"><b>🟢 Pemasukan: ${rp(masuk)} | 🔴 Pengeluaran: ${rp(keluar)} | 🟡 Saldo: ${rp(masuk-keluar)}</b><br>${fin.map(x=>`${x.jenis==='Pemasukan'?'🟢':'🔴'} ${x.jenis} - <b>${rp(x.jumlah)}</b> - ${x.ket||'-'} | 📅 ${x.tgl||'-'}`).join('<br>')}</p>`;
+    }
+    // ⭐ INSIDEN - BARU DITAMBAHIN BEB ⭐
+    let ins=cariInsiden(nama);
+    let insHtml='';
+    if(!ins || !ins.length){ insHtml='<p class="small">Belum ada insiden untuk kapal ini.</p>'; }
+    else {
+      insHtml=`<div class="small"><b>${ins.length} insiden</b><br>${ins.map(x=>{
+        let fotos=x.fotos||(x.foto?[x.foto]:[]);
+        let fotoHtml=fotos.length?`<div class="foto-list">${fotos.map((ft,idx)=>`<img src="${ft}" onclick="bukaFotoInsiden('${ft}','${nama} - ${x.jenis} - Foto ${idx+1}')">`).join('')}</div>`:'';
+        return `🚨 <b>${x.jenis}</b> - <span class="badge ${x.status==='Selesai'?'badge-selesai':(x.status==='Diproses'?'badge-proses':'badge-baru')}">${x.status||'Baru'}</span> | 📅 ${x.tgl||'-'}<br>${x.ket||''} ${fotoHtml}`;
+      }).join('<br><br>')}</div>`;
+    }
+    html+=`<div class="card"><h3 style="margin:0">🚢 ${nama} - ${k.bendera||'-'} - ${k.pelabuhan||'-'} - ${k.kota||'-'} - <span class="badge ${k.status==='ARRIVAL'?'badge-ok':'badge-proses'}">${k.status||'-'}</span></h3><p class="small">${k.gt||'-'} | ${k.agent||'-'} | Crew: ${(crew.on||[]).length+(crew.off||[]).length} | Pax: ${k.pax||0} | ${k.eta||''} s/d ${k.etd||''}</p><h4 style="margin:12px 0 4px">👨‍✈️ Crew Change</h4><p class="small"><b>${nama} - ON: ${(crew.on||[]).length} | OFF: ${(crew.off||[]).length}</b><br>ON: ${onNames}<br>OFF: ${offNames}</p><h4 style="margin:12px 0 4px">📋 Clearance</h4>${clHtml}<h4 style="margin:12px 0 4px">📦 Provision</h4>${provHtml}<h4 style="margin:12px 0 4px">💰 Finance</h4>${finHtml}<h4 style="margin:12px 0 4px">🚨 Insiden</h4>${insHtml}</div>`;
+  });
+  // Kalau insiden ada tapi kapalnya nggak ada di list kapal, tetep tampilin beb biar nggak ilang
+  if(Array.isArray(DB.insiden)){
+    let namaSudahTampil=new Set((DB.kapal||[]).map(k=>k.nama.toLowerCase()));
+    let grup={};
+    DB.insiden.forEach(x=>{ if(!grup[x.kapal]) grup[x.kapal]=[]; grup[x.kapal].push(x); });
+    Object.keys(grup).forEach(nama=>{
+      if(namaSudahTampil.has((nama||'').toLowerCase())) return;
+      if(fKapal && nama!==fKapal) return;
+      if(q && !nama.toLowerCase().includes(q) && !JSON.stringify(grup[nama]).toLowerCase().includes(q)) return;
+      html+=`<div class="card" style="border:2px dashed #F5B301"><h3 style="margin:0">🚢 ${nama} <span class="badge badge-proses">⚠️ Kapal nggak ada di list Kapal - tapi Insiden nya ada beb!</span></h3><p class="small">Nama kapal di Insiden beda dikit sama di Kapal beb, samain nama nya beb!</p><p class="small">${grup[nama].map(x=>`🚨 ${x.jenis} - ${x.status} - ${x.ket||''}`).join('<br>')}</p></div>`;
+    });
+  }
+  document.getElementById('list').innerHTML=html||'<div class="card">Belum ada kapal beb! Coba ganti filter ke Semua Kapal beb!</div>';
+}
+isiDropdown(); render();
+</script></body></html>
