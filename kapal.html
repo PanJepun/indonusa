@@ -31,6 +31,17 @@ input,select,textarea{width:100%;padding:11px;border:1px solid #ddd;border-radiu
 .btn-arr{background:#FFC107;border:0;padding:8px 10px;border-radius:8px;font-weight:800;cursor:pointer;flex:1}
 .btn-hapus{background:#FFE0E0;color:#B00000;border:0;padding:8px 10px;border-radius:8px;font-weight:800;cursor:pointer;flex:1}
 .card-top{display:flex;justify-content:space-between;gap:10px}
+/* ⭐ MODAL HAPUS BEB - BIAR LENGKAP ⭐ */
+#modalHapus{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9999;align-items:center;justify-content:center;padding:16px}
+#modalHapus.show{display:flex}
+.modal-box{background:#fff;width:100%;max-width:420px;border-radius:16px;overflow:hidden;box-shadow:0 10px 30px rgba(0,0,0,.3)}
+.modal-head{background:#B00000;color:#fff;padding:14px 16px;text-align:center;font-weight:900;font-size:15px}
+.modal-body{padding:16px;text-align:center}
+.modal-body .kapal-nama{font-size:18px;font-weight:900;color:#0A2F52;margin:6px 0}
+.modal-body .warn{font-size:13px;line-height:1.6;color:#444;background:#FFF3CD;border:1px solid #FFE08A;border-radius:10px;padding:10px;text-align:left}
+.modal-body input{text-align:center;font-weight:900;font-size:18px;letter-spacing:3px;text-transform:uppercase}
+.modal-foot{display:flex;gap:8px;padding:0 16px 16px}
+.modal-foot button{flex:1;padding:13px;border:0;border-radius:10px;font-weight:900;cursor:pointer;font-size:14px}
 @media(max-width:900px){.kapal-wrap{flex-direction:column}.kapal-right{position:static;width:100%}.grid2{grid-template-columns:1fr}}
 </style></head>
 <body>
@@ -70,35 +81,50 @@ input,select,textarea{width:100%;padding:11px;border:1px solid #ddd;border-radiu
 </div>
 </div>
 </div>
+
+<!-- ⭐ MODAL WARNING HAPUS BEB ⭐ -->
+<div id="modalHapus" onclick="if(event.target===this) tutupModalHapus()">
+<div class="modal-box">
+<div class="modal-head">⚠️ WARNING BEB! ⚠️</div>
+<div class="modal-body">
+<div style="font-size:13px">Kamu mau HAPUS kapal:</div>
+<div class="kapal-nama" id="hapusNamaKapal">-</div>
+<div class="warn">Data kapal ini + <b>Clearance + Crew + Provision + Finance + Insiden</b> nya bakal <b>KEHAPUS SEMUA</b> dan <b>NGGAK BISA BALIK</b> lagi beb!<br><br>Kalau beneran mau hapus, ketik di bawah ini persis:<br><b style="font-size:18px;color:#B00000;letter-spacing:3px">HAPUS</b></div>
+<label style="text-align:left">Ketik HAPUS di sini beb:</label>
+<input id="inputHapus" placeholder="HAPUS" autocomplete="off">
+<p id="hapusError" style="display:none;color:#B00000;font-size:12px;font-weight:800;margin:8px 0 0">❌ Salah beb! Harus ketik persis: HAPUS</p>
+</div>
+<div class="modal-foot">
+<button onclick="tutupModalHapus()" style="background:#eee;color:#333">❌ BATAL</button>
+<button onclick="konfirmasiHapus()" style="background:#B00000;color:#fff">🗑️ HAPUS SEKARANG</button>
+</div>
+</div>
+</div>
+
 <script>
 const firebaseConfig = { apiKey: "AIzaSyBI79kjr4WGpmh3OvUxKXcgRao8PMCcxIY", authDomain: "fir-panjepun.firebaseapp.com", projectId: "fir-panjepun", storageBucket: "fir-panjepun.firebasestorage.app", messagingSenderId: "399104502129", appId: "1:399104502129:web:3230853484a64d220c2ed0" };
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
-// ⭐ DEFAULT MASTER - biar nggak pernah kosong beb, ini kuncinya!
 let DEFAULT_MASTER = { bendera:['Panama','Indonesia','Singapore','Malaysia','Liberia','Bahamas','Malta'], pelabuhan:['Benoa - Bali','Lembar - Lombok','Gili Trawangan','Nusa Penida','Padang Bai'], agent:['Bali Marine','Indonusa Agency','Samudra Jaya'], jenis:['Speedboat','Yacht','Cruise Ship','Ferry','Tanker','Cargo'] };
 let DB = { kapal:[], clear:{}, clearance:{}, crewChange:{}, provision:{}, finance:{}, insiden:[], videos:[], master: JSON.parse(JSON.stringify(DEFAULT_MASTER)) };
 try{ let l=JSON.parse(localStorage.getItem('INDONUSA_DB')||'{}'); if(l&&typeof l==='object'){ DB=Object.assign(DB,l); } }catch(e){}
-// ⭐ FIX 1: Kalau localStorage master nya kosong, pakai default, jangan biarin kosong!
 if(!DB.master || !DB.master.jenis || !DB.master.jenis.length) DB.master = JSON.parse(JSON.stringify(DEFAULT_MASTER));
 ['bendera','pelabuhan','agent','jenis'].forEach(k=>{ if(!DB.master[k] || !DB.master[k].length) DB.master[k]=DEFAULT_MASTER[k].slice(); });
-
 let editId='';
+let hapusId='';
 function simpanDB(){
   document.getElementById('statusSync').innerText='⏳ Menyimpan ke Firebase...';
   localStorage.setItem('INDONUSA_DB', JSON.stringify(DB));
   return db.collection("indonusa").doc("data_utama").set(DB).then(()=>{ document.getElementById('statusSync').innerText='✅ Tersimpan ke Firebase'; }).catch(e=>{ document.getElementById('statusSync').innerText='❌ Gagal: '+e.message; alert('GAGAL SAVE KE FIREBASE BEB!\n'+e.message); });
 }
-// ⭐ FIX 2: onSnapshot JANGAN nimpa master lokal kalau Firebase master nya kosong!
 db.collection("indonusa").doc("data_utama").onSnapshot(function(doc){
   if(doc.exists){
     let d=doc.data()||{};
-    // Gabung, jangan timpa mentah-mentah beb!
     if(d.kapal) DB.kapal=d.kapal;
     if(d.clear) DB.clear=d.clear; if(d.clearance) DB.clearance=d.clearance;
     if(d.crewChange) DB.crewChange=d.crewChange; if(d.provision) DB.provision=d.provision;
     if(d.finance) DB.finance=d.finance; if(d.insiden) DB.insiden=d.insiden; if(d.videos) DB.videos=d.videos;
     if(d.master && d.master.jenis && d.master.jenis.length) DB.master=d.master;
-    // Kalau Firebase master kosong, upload master lokal ke Firebase biar nggak ilang lagi
     else { simpanDB(); }
     localStorage.setItem('INDONUSA_DB', JSON.stringify(DB));
   }
@@ -108,7 +134,7 @@ db.collection("indonusa").doc("data_utama").onSnapshot(function(doc){
 function isiMaster(){
   ['bendera','pelabuhan','agent','jenis'].forEach(k=>{
     let s=document.getElementById(k); if(!s) return;
-    let cur=s.value; // ⭐ Simpan pilihan sekarang, jangan di-reset!
+    let cur=s.value;
     let label={bendera:'Pilih Bendera',pelabuhan:'Pilih Pelabuhan',agent:'Pilih Agent',jenis:'Pilih Jenis Kapal'}[k];
     s.innerHTML=`<option value="">${label}</option>`+(DB.master[k]||[]).map(x=>`<option value="${x}">${x}</option>`).join('');
     if(cur && (DB.master[k]||[]).includes(cur)) s.value=cur;
@@ -128,7 +154,6 @@ function simpanKapal(){
   let nama=document.getElementById('nama').value.trim();
   if(!nama){alert('Isi Nama Kapal dulu beb!'); document.getElementById('nama').focus(); return;}
   let jenis=document.getElementById('jenis').value;
-  // ⭐ FIX 3: Kasih tau kalau Jenis Kapal belum dipilih, jangan diam-diam ke-save kosong!
   if(!jenis){ if(!confirm('Jenis Kapal belum dipilih beb! Tetap SAVE dengan Jenis Kapal kosong?')){ document.getElementById('jenis').focus(); return; } }
   let data={ id: editId || ('K'+Date.now()), nama:nama, bendera:document.getElementById('bendera').value, callSign:document.getElementById('callSign').value, pelabuhan:document.getElementById('pelabuhan').value, agent:document.getElementById('agent').value, jenis:jenis, grt:document.getElementById('grt').value, grtUnit:document.getElementById('grtUnit').value, eta:document.getElementById('eta').value, etd:document.getElementById('etd').value, crew:document.getElementById('crewJml').value, pax:document.getElementById('pax').value, catatan:document.getElementById('catatan').value, status: editId ? ((DB.kapal||[]).find(k=>k.id===editId)?.status||'ARRIVAL') : 'ARRIVAL' };
   let idx=(DB.kapal||[]).findIndex(k=>k.id===editId || k.nama.toLowerCase()===nama.toLowerCase());
@@ -146,7 +171,36 @@ function toggleStatus(id){
   let k=(DB.kapal||[]).find(x=>x.id===id || x.nama===id); if(!k) return;
   k.status = k.status==='ARRIVAL' ? 'DEPARTURE' : 'ARRIVAL'; simpanDB().then(()=>render());
 }
-function hapusKapal(id){ let k=(DB.kapal||[]).find(x=>x.id===id || x.nama===id); if(!k) return; if(!confirm('Hapus kapal '+k.nama+' beb?'))return; DB.kapal=DB.kapal.filter(x=>x.id!==k.id && x.nama!==k.nama); delete DB.crewChange[k.nama]; delete DB.clear[k.nama]; delete DB.clearance[k.nama]; delete DB.provision[k.nama]; delete DB.finance[k.nama]; if(Array.isArray(DB.insiden)) DB.insiden=DB.insiden.filter(x=>x.kapal!==k.nama); simpanDB().then(()=>render()); }
+/* ⭐ FIX HAPUS KAPAL BEB - MODAL LENGKAP, NGGAK KE POTONG ⭐ */
+function hapusKapal(id){
+  let k=(DB.kapal||[]).find(x=>x.id===id || x.nama===id); if(!k) return;
+  hapusId=k.id||k.nama;
+  document.getElementById('hapusNamaKapal').innerText='🚢 ' + k.nama;
+  document.getElementById('inputHapus').value='';
+  document.getElementById('hapusError').style.display='none';
+  document.getElementById('modalHapus').classList.add('show');
+  setTimeout(()=>document.getElementById('inputHapus').focus(),100);
+}
+function tutupModalHapus(){
+  document.getElementById('modalHapus').classList.remove('show');
+  hapusId='';
+  document.getElementById('inputHapus').value='';
+}
+function konfirmasiHapus(){
+  let ketik=document.getElementById('inputHapus').value.trim();
+  let k=(DB.kapal||[]).find(x=>x.id===hapusId || x.nama===hapusId);
+  if(!k){ tutupModalHapus(); return; }
+  if(ketik !== 'HAPUS'){
+    document.getElementById('hapusError').style.display='block';
+    document.getElementById('inputHapus').focus();
+    document.getElementById('inputHapus').select();
+    return;
+  }
+  DB.kapal=DB.kapal.filter(x=>x.id!==k.id && x.nama!==k.nama); delete DB.crewChange[k.nama]; delete DB.clear[k.nama]; delete DB.clearance[k.nama]; delete DB.provision[k.nama]; delete DB.finance[k.nama]; if(Array.isArray(DB.insiden)) DB.insiden=DB.insiden.filter(x=>x.kapal!==k.nama);
+  tutupModalHapus();
+  simpanDB().then(()=>{ render(); alert('✅ Kapal ' + k.nama + ' BERHASIL DIHAPUS BEB!'); });
+}
+document.getElementById('inputHapus').addEventListener('keydown', function(e){ if(e.key==='Enter') konfirmasiHapus(); });
 function render(){
   isiMaster();
   let q=(document.getElementById('cari').value||'').toLowerCase();
