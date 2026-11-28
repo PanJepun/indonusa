@@ -3,13 +3,10 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <style>
 *{box-sizing:border-box} body{margin:0;font-family:'Segoe UI',Arial;background:#EEF2F7;color:#222}
-/* TOPBAR - DIKUNCI JUGA BEB */
 .topbar{background:linear-gradient(90deg,#d4af37 0%,#f7eb81 100%);padding:10px 14px;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:200}
 .topbar h1{margin:0;font-size:16px;color:#000;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .btn-back{background:#0A2F52;color:#fff;border:0;padding:9px 14px;border-radius:50px;font-weight:800;cursor:pointer;font-size:13px;white-space:nowrap}
 .wrap{max-width:1100px;margin:0 auto;padding:12px}
-
-/* ⭐ CARD 1 - ATAS - KECIL + DIKUNCI, NGGAK IKUT SCROLL BEB ⭐ */
 .card-atas{background:#fff;border-radius:12px;padding:12px 14px;position:sticky;top:52px;z-index:100;box-shadow:0 4px 14px rgba(0,0,0,.12);border:1px solid #E6C87A}
 .card-atas h3{margin:0 0 8px;font-size:15px}
 .form-atas{display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:8px;align-items:end}
@@ -17,8 +14,6 @@
 .form-atas input,.form-atas select{width:100%;padding:9px 10px;border:1px solid #ddd;border-radius:9px;font-size:13px;background:#fff}
 .btn-save{background:#0A2F52;color:#fff;border:0;padding:10px 16px;border-radius:9px;font-weight:900;cursor:pointer;font-size:13px;white-space:nowrap;height:39px}
 .btn-save:hover{background:#000}
-
-/* ⭐ CARD 2 - BAWAH - INI YANG BISA DI-SCROLL BEB ⭐ */
 .card-bawah{background:#fff;border-radius:12px;padding:16px;margin-top:12px}
 .card-bawah h3{margin:14px 0 8px;font-size:15px}
 .card-bawah h3:first-child{margin-top:0}
@@ -54,7 +49,6 @@ input[type=text],select{width:100%;padding:10px;border:1px solid #ddd;border-rad
 
 <div class="wrap">
 
-<!-- ⭐ CARD 1 - ATAS - KECIL + DIKUNCI ⭐ -->
 <div class="card-atas">
 <h3>👨‍✈️ Crew Change - <span id="judulKapal">Pilih Kapal</span></h3>
 <div class="form-atas">
@@ -66,7 +60,6 @@ input[type=text],select{width:100%;padding:10px;border:1px solid #ddd;border-rad
 <p id="debug" style="font-size:11px;color:#666;margin:6px 0 0"></p>
 </div>
 
-<!-- ⭐ CARD 2 - BAWAH - SCROLL BEBAS ⭐ -->
 <div class="card-bawah">
 <h3>🟢 CREW ON (<span id="jmlOn">0</span>)</h3>
 <div id="onForm"></div>
@@ -94,6 +87,8 @@ try{ let l=JSON.parse(localStorage.getItem('INDONUSA_DB')||'{}'); if(l&&typeof l
 if(!DB.crewChange) DB.crewChange={};
 let onRows=[{nama:'',passport:'',jabatan:'',negara:'Indonesia'}];
 let offRows=[{nama:'',passport:'',jabatan:'',negara:'Indonesia'}];
+// ⭐ HELPER BEB - CUMA KAPAL YANG MASIH SANDAR BEB, YANG UDAH DEPARTURE DI-SKIP BEB ⭐
+function getKapalAktif(){ return (DB.kapal||[]).filter(k=>k.status!=='DEPARTURE'); }
 function updateJudul(){ document.getElementById('judulKapal').innerText=document.getElementById('namaKapal').value||'Pilih Kapal'; }
 function simpanDB(){
   document.getElementById('statusSync').innerText='⏳ Menyimpan...';
@@ -108,9 +103,11 @@ db.collection("indonusa").doc("data_utama").onSnapshot(function(doc){
 function isiKapal(){
   let s=document.getElementById('pilihKapal'); let f=document.getElementById('filterKapal');
   let v=s.value, fv=f.value;
-  s.innerHTML='<option value="">-- Pilih Kapal --</option>'+(DB.kapal||[]).map(k=>`<option value="${k.nama}">${k.nama}</option>`).join('');
-  f.innerHTML='<option value="">-- 🌐 Semua Kapal --</option>'+(DB.kapal||[]).map(k=>`<option value="${k.nama}">${k.nama}</option>`).join('');
-  if(v) s.value=v; if(fv) f.value=fv;
+  // ⭐ FIX BEB - PAKAI getKapalAktif() BEB, JADI KAPAL UDAH DEPARTURE LANGSUNG HILANG DARI 2 DROPDOWN BEB ⭐
+  s.innerHTML='<option value="">-- Pilih Kapal --</option>'+getKapalAktif().map(k=>`<option value="${k.nama}">${k.nama} - Voyage #${k.voyage||1}</option>`).join('');
+  f.innerHTML='<option value="">-- 🌐 Semua Kapal --</option>'+getKapalAktif().map(k=>`<option value="${k.nama}">${k.nama} - Voyage #${k.voyage||1}</option>`).join('');
+  if(v && getKapalAktif().some(k=>k.nama===v)) s.value=v; else if(v) s.value='';
+  if(fv && getKapalAktif().some(k=>k.nama===fv)) f.value=fv; else if(fv) f.value='';
 }
 function onPilihKapal(){ let v=document.getElementById('pilihKapal').value; if(v){ document.getElementById('namaKapal').value=v; updateJudul(); } }
 function renderForm(){

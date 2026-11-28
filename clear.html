@@ -42,7 +42,6 @@ input,select{width:100%;padding:10px;border:1px solid #ddd;border-radius:10px;ma
 .doc-left input[type=checkbox]{width:22px;height:22px;margin:2px 0 0;accent-color:#1A7A1A}
 .doc-left b{font-size:14px;color:#0A2F52}
 .doc-left span{font-size:12px;color:#777}
-/* ⭐ ZOOM MODAL BEB - FIX ⭐ */
 #zoomModal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:9999;flex-direction:column}
 #zoomModal.show{display:flex}
 .zoom-head{display:flex;justify-content:space-between;align-items:center;padding:10px 12px;background:#0A2F52;color:#fff;gap:8px}
@@ -84,7 +83,6 @@ input,select{width:100%;padding:10px;border:1px solid #ddd;border-radius:10px;ma
 
 </div>
 
-<!-- ⭐ MODAL ZOOM BEB ⭐ -->
 <div id="zoomModal" onclick="if(event.target===this) tutupZoom()">
 <div class="zoom-head"><b id="zoomJudul">📄 Preview</b><button onclick="tutupZoom()" style="background:#FFE0E0;color:#B00000">✕ TUTUP</button></div>
 <div class="zoom-body" id="zoomBody"></div>
@@ -102,6 +100,8 @@ const db = firebase.firestore();
 let DB = { kapal:[], clear:{}, clearance:{}, crewChange:{}, provision:{}, finance:{}, insiden:[], videos:[], master:{} };
 try{ let l=JSON.parse(localStorage.getItem('INDONUSA_DB')||'{}'); if(l&&typeof l==='object') DB=Object.assign(DB,l); }catch(e){}
 if(!DB.clear) DB.clear={}; if(!DB.clearance) DB.clearance={};
+// ⭐ HELPER BEB - CUMA KAPAL YANG MASIH SANDAR BEB, YANG UDAH DEPARTURE DI-SKIP BEB ⭐
+function getKapalAktif(){ return (DB.kapal||[]).filter(k=>k.status!=='DEPARTURE'); }
 function getNamaKapal(){ return document.getElementById('clearKapalNama').value.trim(); }
 function updateJudul(){ document.getElementById('judulKapal').innerText=getNamaKapal()||'Pilih Kapal'; }
 function simpanDB(){
@@ -117,8 +117,9 @@ db.collection("indonusa").doc("data_utama").onSnapshot(function(doc){
 });
 function kapalOptions(){
   let s=document.getElementById('pilihClear'); let v=s.value;
-  s.innerHTML='<option value="">-- Pilih Kapal --</option>'+(DB.kapal||[]).map(k=>`<option value="${k.nama}">${k.nama}</option>`).join('');
-  if(v) s.value=v;
+  // ⭐ FIX BEB - PAKAI getKapalAktif() BEB, JADI KAPAL UDAH DEPARTURE LANGSUNG HILANG DARI DROPDOWN BEB ⭐
+  s.innerHTML='<option value="">-- Pilih Kapal --</option>'+getKapalAktif().map(k=>`<option value="${k.nama}">${k.nama} - Voyage #${k.voyage||1}</option>`).join('');
+  if(v && getKapalAktif().some(k=>k.nama===v)) s.value=v; else if(v) s.value='';
 }
 let docs=['Ship Particulars','Crew List + Passport','Cruising Permit (CAIT)','SPB - Surat Persetujuan Berlayar','Clearance Imigrasi','Clearance Bea Cukai','Clearance Karantina','Bunker Delivery Note','Final D/A'];
 let previewURL={}; let fileDataTemp={};
@@ -170,7 +171,6 @@ function tampilkanPreviewTersimpan(i){
   let nama=getNamaKapal(); let data=nama?DB.clear[nama]:null; let doc=data?data.checks.find(c=>c.nama===docs[i]):null;
   if(doc && doc.fileData){ let box=document.getElementById('prevBox-'+i); previewURL[i]=doc.fileData; fileDataTemp[i]=doc.fileData; document.getElementById('prevNama-'+i).innerText=doc.file+' - ✅ UDAH KESIMPEN BEB!'; document.getElementById('fileNama-'+i).innerText='File tersimpan beb: '+doc.file; document.getElementById('fileInfo-'+i).innerText='✅ File ini udah kesimpen permanen beb, gak ilang kalo keluar beb!'; if(doc.file.toLowerCase().endsWith('.pdf') || doc.fileData.includes('application/pdf')) box.innerHTML='<iframe src="'+doc.fileData+'"></iframe>'; else box.innerHTML='<img src="'+doc.fileData+'">'; }
 }
-/* ⭐ FIX ZOOM BEB - BUKA MODAL, BUKAN TAB BARU ⭐ */
 let zoomLevel=1;
 function bukaPreview(i){
   let dataUrl=previewURL[i];
@@ -183,7 +183,6 @@ function bukaPreview(i){
   document.getElementById('zoomJudul').innerText='📄 '+docs[i]+' - '+getNamaKapal();
   let body=document.getElementById('zoomBody');
   let isPdf=dataUrl.includes('application/pdf') || dataUrl.includes('.pdf');
-  // Cek dari nama file juga beb
   let nama=getNamaKapal(); let data=nama?DB.clear[nama]:null; let doc=data?data.checks.find(c=>c.nama===docs[i]):null;
   if(doc && doc.file && doc.file.toLowerCase().endsWith('.pdf')) isPdf=true;
   if(isPdf){
@@ -237,7 +236,8 @@ function simpanSatu(i){
   DB.clear[nama].checks[i]={nama:docs[i],no:no,tgl:tgl,file:fileNama||'-',fileData:fileData,catat:document.getElementById('docCatat-'+i).value,status:'ADA ✅'};
   DB.clear[nama].status=document.getElementById('statusClear').value; DB.clear[nama].tglSimpan=new Date().toLocaleString('id-ID');
   DB.clearance[nama]=DB.clear[nama];
-  let k=DB.kapal.find(x=>x.nama.toLowerCase()===nama.toLowerCase()); if(k) k.status=document.getElementById('statusClear').value;
+  // ⭐ FIX BEB - JANGAN TIMPA STATUS KAPAL YANG UDAH DEPARTURE BEB, BIAR NGGAK HIDUP LAGI BEB ⭐
+  let k=DB.kapal.find(x=>x.nama.toLowerCase()===nama.toLowerCase()); if(k && k.status!=='DEPARTURE') k.status=document.getElementById('statusClear').value;
   simpanDB().then(()=>{ updateBadge(); renderClear(); alert('BERHASIL BEB! ✅\n'+docs[i]+' tersimpan beb!\nNo: '+no+'\nFile: '+fileNama); let el=document.getElementById('doc-'+i); if(el) el.style.display='none'; }).catch(()=>{});
 }
 function simpanSemua(){

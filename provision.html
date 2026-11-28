@@ -92,6 +92,8 @@ let DB = { kapal:[], clear:{}, clearance:{}, crewChange:{}, provision:{}, financ
 try{ let l=JSON.parse(localStorage.getItem('INDONUSA_DB')||'{}'); if(l&&typeof l==='object') DB=Object.assign(DB,l); }catch(e){}
 if(!DB.provision) DB.provision={};
 let rows=[{item:'',jumlah:'',satuan:'',harga:'',ket:''}];
+// ⭐ HELPER BEB - CUMA KAPAL YANG MASIH SANDAR BEB, YANG UDAH DEPARTURE DI-SKIP BEB ⭐
+function getKapalAktif(){ return (DB.kapal||[]).filter(k=>k.status!=='DEPARTURE'); }
 function rp(n){ n=Number(n)||0; return 'Rp '+n.toLocaleString('id-ID'); }
 function updateJudul(){ document.getElementById('judulKapal').innerText=document.getElementById('namaKapal').value||'Pilih Kapal'; }
 function simpanDB(){
@@ -107,12 +109,13 @@ db.collection("indonusa").doc("data_utama").onSnapshot(function(doc){
 function isiKapal(){
   let s=document.getElementById('pilihKapal'); let f=document.getElementById('filterKapal');
   let v=s.value, fv=f.value;
-  s.innerHTML='<option value="">-- Pilih Kapal --</option>'+(DB.kapal||[]).map(k=>`<option value="${k.nama}">${k.nama}</option>`).join('');
-  f.innerHTML='<option value="">-- 🌐 Semua Kapal --</option>'+(DB.kapal||[]).map(k=>`<option value="${k.nama}">${k.nama}</option>`).join('');
-  if(v) s.value=v; if(fv) f.value=fv;
+  // ⭐ FIX BEB - PAKAI getKapalAktif() BEB, JADI KAPAL UDAH DEPARTURE LANGSUNG HILANG DARI 2 DROPDOWN BEB ⭐
+  s.innerHTML='<option value="">-- Pilih Kapal --</option>'+getKapalAktif().map(k=>`<option value="${k.nama}">${k.nama} - Voyage #${k.voyage||1}</option>`).join('');
+  f.innerHTML='<option value="">-- 🌐 Semua Kapal --</option>'+getKapalAktif().map(k=>`<option value="${k.nama}">${k.nama} - Voyage #${k.voyage||1}</option>`).join('');
+  if(v && getKapalAktif().some(k=>k.nama===v)) s.value=v; else if(v) s.value='';
+  if(fv && getKapalAktif().some(k=>k.nama===fv)) f.value=fv; else if(fv) f.value='';
 }
 function onPilihKapal(){ let v=document.getElementById('pilihKapal').value; if(v){ document.getElementById('namaKapal').value=v; updateJudul(); } }
-// ⭐ INI KUNCINYA BEB - UPDATE TOTAL DOANG, JANGAN RENDER ULANG FORM NYA! ⭐
 function updateTotalSaja(i){
   let tot=(Number(rows[i].jumlah)||0)*(Number(rows[i].harga)||0);
   let el=document.getElementById('total-'+i);

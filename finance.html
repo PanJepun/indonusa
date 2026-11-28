@@ -42,7 +42,6 @@ input[type=number]{ -moz-appearance:textfield; appearance:textfield; }
 
 <div class="wrap">
 
-<!-- ⭐ CARD 1 - ATAS - KECIL + DIKUNCI ⭐ -->
 <div class="card-atas">
 <h3>💰 Finance - <span id="judulKapal">Pilih Kapal</span></h3>
 <div class="form-atas">
@@ -53,7 +52,6 @@ input[type=number]{ -moz-appearance:textfield; appearance:textfield; }
 <p id="debug" style="font-size:11px;color:#666;margin:6px 0 0"></p>
 </div>
 
-<!-- ⭐ CARD 2 - BAWAH - SCROLL ⭐ -->
 <div class="card-bawah">
 <h3 style="margin:0">💰 Tambah Pemasukan / Pengeluaran</h3>
 
@@ -88,8 +86,9 @@ const db = firebase.firestore();
 let DB = { kapal:[], clear:{}, clearance:{}, crewChange:{}, provision:{}, finance:{}, insiden:[], videos:[], master:{} };
 try{ let l=JSON.parse(localStorage.getItem('INDONUSA_DB')||'{}'); if(l&&typeof l==='object') DB=Object.assign(DB,l); }catch(e){}
 if(!DB.finance) DB.finance={};
-// Kalau finance lama masih array, ubah jadi per kapal beb biar nggak ilang
 if(Array.isArray(DB.finance)){ let lama=DB.finance; DB.finance={}; if(lama.length) DB.finance['Tanpa Kapal']=lama; }
+// ⭐ HELPER BEB - CUMA KAPAL YANG MASIH SANDAR BEB, YANG UDAH DEPARTURE DI-SKIP BEB ⭐
+function getKapalAktif(){ return (DB.kapal||[]).filter(k=>k.status!=='DEPARTURE'); }
 function rp(n){ n=Number(n)||0; return 'Rp '+n.toLocaleString('id-ID'); }
 function updateJudul(){ document.getElementById('judulKapal').innerText=document.getElementById('namaKapal').value||'Pilih Kapal'; }
 function updatePreview(){ document.getElementById('previewJumlah').innerText='Preview: '+rp(document.getElementById('jumlah').value); }
@@ -106,9 +105,11 @@ db.collection("indonusa").doc("data_utama").onSnapshot(function(doc){
 function isiKapal(){
   let s=document.getElementById('pilihKapal'); let f=document.getElementById('filterKapal');
   let v=s.value, fv=f.value;
-  s.innerHTML='<option value="">-- Pilih Kapal --</option>'+(DB.kapal||[]).map(k=>`<option value="${k.nama}">${k.nama}</option>`).join('');
-  f.innerHTML='<option value="">-- 🌐 Semua Kapal --</option>'+(DB.kapal||[]).map(k=>`<option value="${k.nama}">${k.nama}</option>`).join('');
-  if(v) s.value=v; if(fv) f.value=fv;
+  // ⭐ FIX BEB - PAKAI getKapalAktif() BEB, JADI KAPAL UDAH DEPARTURE LANGSUNG HILANG DARI 2 DROPDOWN BEB ⭐
+  s.innerHTML='<option value="">-- Pilih Kapal --</option>'+getKapalAktif().map(k=>`<option value="${k.nama}">${k.nama} - Voyage #${k.voyage||1}</option>`).join('');
+  f.innerHTML='<option value="">-- 🌐 Semua Kapal --</option>'+getKapalAktif().map(k=>`<option value="${k.nama}">${k.nama} - Voyage #${k.voyage||1}</option>`).join('');
+  if(v && getKapalAktif().some(k=>k.nama===v)) s.value=v; else if(v) s.value='';
+  if(fv && getKapalAktif().some(k=>k.nama===fv)) f.value=fv; else if(fv) f.value='';
 }
 function onPilihKapal(){ let v=document.getElementById('pilihKapal').value; if(v){ document.getElementById('namaKapal').value=v; updateJudul(); } }
 function getAllFinance(){
